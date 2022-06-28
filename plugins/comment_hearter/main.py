@@ -1,11 +1,12 @@
 class CommentHearter:
-    auto_like_channels = ['support', 'check-this-out', 'food', 'purrfect-pets']
+    auto_like_channels = []
     client = None
     config = None
 
     def __init__(self, client, config):
         self.client = client
         self.config = config
+        self.auto_like_channels = config['HEART_CHANNELS'].split(',')
 
     async def on_message(self, message):
         if message.channel.name in self.auto_like_channels:
