@@ -102,7 +102,7 @@ class DuckHuntGame:
         GFDDatabaseHelper.release_db()
         ducks_users = []
         for member in channel.members:
-            if self.client.user.id == member.id:
+            if self.client.user.id == member.id or member.bot:
                 continue
             bef_count = befriended_ducks_map[member.id] if member.id in befriended_ducks_map else 0
             kill_count = killed_ducks_map[member.id] if member.id in befriended_ducks_map else 0
