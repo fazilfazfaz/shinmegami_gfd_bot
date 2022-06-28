@@ -19,12 +19,12 @@ class UserSilencer:
             await self.timeout_user(message)
 
     async def timeout_user(self, message):
-        chance = random.randint(1, 100)
+        chance = random.randint(1, 1000)
         too_soon_to_silence = False
         if message.author.id in self.last_silence_times:
             if time.time() - self.last_silence_times[message.author.id] < 600:
                 too_soon_to_silence = True
-        if chance <= 5 and not too_soon_to_silence:
+        if chance <= 2 and not too_soon_to_silence:
             print(f'We got {message.author.display_name}!')
             self.last_silence_times[message.author.id] = time.time()
             await message.author.timeout(datetime.timedelta(seconds=60))
