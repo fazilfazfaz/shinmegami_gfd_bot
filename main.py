@@ -2,9 +2,9 @@ import discord
 from dotenv import dotenv_values
 
 from database.helper import GFDDatabaseHelper
-from games.comment_hearter.main import CommentHearter
-from games.duckhunt.main import DuckHuntGame
-from games.user_silencer.main import UserSilencer
+from plugins.comment_hearter.main import CommentHearter
+from plugins.duckhunt.main import DuckHuntGame
+from plugins.user_silencer.main import UserSilencer
 
 config = dotenv_values('.env')
 
