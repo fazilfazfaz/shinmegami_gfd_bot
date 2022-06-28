@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 
+import discord
 import math
 
 from database.helper import GFDDatabaseHelper
@@ -161,20 +162,24 @@ class DuckHuntGame:
         GFDDatabaseHelper.replenish_db()
         user = User.get_by_message(message)
         GFDDatabaseHelper.release_db()
+        embed_url = None
         if user.ducks_killed > 0:
+            embed_url = 'https://c.tenor.com/4aYkNoeULW4AAAAC/mokey-puppet-monkey.gif'
             message_parts = [
                 'You\'ve shot ducks 😱',
                 'No family for you!',
-                'https://c.tenor.com/4aYkNoeULW4AAAAC/mokey-puppet-monkey.gif',
             ]
         elif user.ducks_befriended > 0:
             message_parts = [
                 'Your duckie fam is here!',
                 '🦆' * user.ducks_befriended,
-            ]
+                ]
         else:
+            embed_url = 'https://c.tenor.com/qV4ycK5YEY8AAAAC/shrug-idk.gif'
             message_parts = [
                 'You should meet more ducks',
-                'https://c.tenor.com/qV4ycK5YEY8AAAAC/shrug-idk.gif',
             ]
-        await message.reply("\n".join(message_parts))
+        embed = discord.Embed()
+        if embed_url is not None:
+            embed.set_image(url=embed_url)
+        await message.reply("\n".join(message_parts), embed=embed)
