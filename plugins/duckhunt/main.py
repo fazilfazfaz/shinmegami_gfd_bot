@@ -37,13 +37,13 @@ class DuckHuntGame:
             await self.print_duck_statistics(message.channel)
         elif message.content in ['.bef', '.befriend', '!bef', '🍕']:
             if not self.is_duck_catchable(message.channel):
-                return await self.post_no_duck_message(message.channel, 'befriend')
+                return await self.post_no_duck_message(message, 'befriend')
             elif self.should_miss_attempt():
                 return await self.post_duck_miss_message(message, 'befriend')
             await self.befriend_duck_for_user(message)
         elif message.content in ['.bang', '.kill', '.bang', '.shoot', '🔫']:
             if not self.is_duck_catchable(message.channel):
-                return await self.post_no_duck_message(message.channel, 'kill')
+                return await self.post_no_duck_message(message, 'kill')
             elif self.should_miss_attempt():
                 return await self.post_duck_miss_message(message, 'kill')
             await self.kill_duck_for_user(message)
@@ -136,11 +136,11 @@ class DuckHuntGame:
     def is_duck_catchable(self, channel):
         return self.current_duck_channel == channel.id
 
-    async def post_no_duck_message(self, channel, type):
-        if type == 'befriend':
-            await channel.send("You tried befriending a non-existent duck, that's hecking creepy.")
+    async def post_no_duck_message(self, message, action_type):
+        if action_type == 'befriend':
+            await message.reply("You tried befriending a non-existent duck, that's hecking creepy.")
         else:
-            await channel.send("There is no duck. What are you shooting at?")
+            await message.reply("There is no duck. What are you shooting at?")
 
     async def release_a_duck(self):
         channels_to_release_in = self.config['DUCK_CHANNELS'].split(',')
