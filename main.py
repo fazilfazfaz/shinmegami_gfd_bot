@@ -22,13 +22,13 @@ async def on_ready():
     GFDDatabaseHelper()
     comment_hearter = CommentHearter(client, config)
     duckhunt_game = DuckHuntGame(client, config)
-    clip_silencer = UserSilencer(client, config)
+    user_silencer = UserSilencer(client, config)
 
     @client.event
     async def on_message(message):
         await comment_hearter.on_message(message)
         await duckhunt_game.on_message(message)
-        await clip_silencer.on_message(message)
+        await user_silencer.on_message(message)
 
 
 client.run(TOKEN)
