@@ -59,7 +59,7 @@ class DuckHuntGame:
                 await self.last_duck_message.delete()
                 await self.release_a_duck()
             else:
-                minutes_to_sleep = random.randint(40, 60) * 60
+                minutes_to_sleep = random.randint(120, 140) * 60
                 print(f'Duck to be released after {minutes_to_sleep}')
                 await asyncio.sleep(minutes_to_sleep)
                 await self.release_a_duck()
