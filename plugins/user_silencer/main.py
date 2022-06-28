@@ -15,7 +15,7 @@ class UserSilencer:
         self.users_to_silence += config['USERS_TO_SILENCE'].split(",")
 
     async def on_message(self, message):
-        if message.author.id in self.users_to_silence:
+        if str(message.author.id) in self.users_to_silence:
             await self.timeout_user(message)
 
     async def timeout_user(self, message):

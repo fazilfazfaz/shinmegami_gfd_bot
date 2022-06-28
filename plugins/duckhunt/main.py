@@ -32,9 +32,9 @@ class DuckHuntGame:
     async def on_message(self, message):
         if message.content in ['.fam']:
             await self.print_duck_family_or_pgtips_gif(message)
-        if message.content in ['.duckstats', '.dickstats', '.duckstat']:
+        elif message.content in ['.duckstats', '.dickstats', '.duckstat']:
             await self.print_duck_statistics(message.channel)
-        if message.content in ['.bef', '.befriend', '!bef', '🍕']:
+        elif message.content in ['.bef', '.befriend', '!bef', '🍕']:
             if not self.is_duck_catchable(message.channel):
                 return await self.post_no_duck_message(message.channel, 'befriend')
             elif self.should_miss_attempt():
