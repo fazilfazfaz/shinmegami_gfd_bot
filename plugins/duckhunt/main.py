@@ -179,7 +179,9 @@ class DuckHuntGame:
             message_parts = [
                 'You should meet more ducks',
             ]
-        embed = discord.Embed()
         if embed_url is not None:
+            embed = discord.Embed()
             embed.set_image(url=embed_url)
+        else:
+            embed = None
         await message.reply("\n".join(message_parts), embed=embed)
