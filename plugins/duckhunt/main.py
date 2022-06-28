@@ -87,7 +87,7 @@ class DuckHuntGame:
         GFDDatabaseHelper.release_db()
         message_parts = [
             '<@{}> You shot a duck in {} seconds!'.format(message.author.id, time_to_befriend),
-            'You have shot {} lil ducks.'.format(user.ducks_befriended)
+            'You have shot {} lil ducks.'.format(user.ducks_killed)
         ]
         response_message = '\n'.join(message_parts)
         await message.channel.send(response_message)
