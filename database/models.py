@@ -8,6 +8,19 @@ class BaseModel(Model):
         database = db
 
 
+class AnnouncedYoutubeVideo(BaseModel):
+    video_id = CharField(null=False, unique=True, primary_key=True)
+
+    @staticmethod
+    def should_announce(video_id):
+        try:
+            video = AnnouncedYoutubeVideo.get(AnnouncedYoutubeVideo.video_id == video_id)
+            return False
+        except DoesNotExist:
+            AnnouncedYoutubeVideo.create(video_id=video_id)
+            return True
+
+
 class User(BaseModel):
     user_id = BigIntegerField(unique=True, primary_key=True)
     username = CharField(null=False)

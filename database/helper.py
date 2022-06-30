@@ -1,11 +1,12 @@
-from database.models import User, db
+from database.models import User, db, AnnouncedYoutubeVideo
 
 
 class GFDDatabaseHelper:
     def __init__(self):
         db.connect()
         db.create_tables([
-            User
+            User,
+            AnnouncedYoutubeVideo
         ])
         db.commit()
         db.close()

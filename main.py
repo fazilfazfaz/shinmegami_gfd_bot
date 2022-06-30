@@ -5,6 +5,7 @@ from database.helper import GFDDatabaseHelper
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
 from plugins.user_silencer.main import UserSilencer
+from plugins.youtube_announcer.main import YoutubeAnnouncer
 
 config = dotenv_values('.env')
 
@@ -23,6 +24,7 @@ async def on_ready():
     comment_hearter = CommentHearter(client, config)
     duckhunt_game = DuckHuntGame(client, config)
     user_silencer = UserSilencer(client, config)
+    YoutubeAnnouncer(client, config)
 
     @client.event
     async def on_message(message):
