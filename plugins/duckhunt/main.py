@@ -31,17 +31,18 @@ class DuckHuntGame:
         asyncio.get_event_loop().create_task(self.duck_spawner())
 
     async def on_message(self, message):
-        if message.content in ['.fam']:
+        lower_case_message = message.content.strtolower()
+        if lower_case_message in ['.fam']:
             await self.print_duck_family_or_pgtips_gif(message)
-        elif message.content in ['.duckstats', '.dickstats', '.duckstat']:
+        elif lower_case_message in ['.duckstats', '.dickstats', '.duckstat']:
             await self.print_duck_statistics(message.channel)
-        elif message.content in ['.bef', '.befriend', '!bef', '🍕']:
+        elif lower_case_message in ['.bef', '.befriend', '!bef', '🍕']:
             if not self.is_duck_catchable(message.channel):
                 return await self.post_no_duck_message(message, 'befriend')
             elif self.should_miss_attempt():
                 return await self.post_duck_miss_message(message, 'befriend')
             await self.befriend_duck_for_user(message)
-        elif message.content in ['.bang', '.kill', '.bang', '.shoot', '🔫']:
+        elif lower_case_message in ['.bang', '.kill', '.bang', '.shoot', '🔫']:
             if not self.is_duck_catchable(message.channel):
                 return await self.post_no_duck_message(message, 'kill')
             elif self.should_miss_attempt():
