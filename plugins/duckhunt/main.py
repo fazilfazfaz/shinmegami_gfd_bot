@@ -31,7 +31,7 @@ class DuckHuntGame:
         asyncio.get_event_loop().create_task(self.duck_spawner())
 
     async def on_message(self, message):
-        lower_case_message = message.content.strtolower()
+        lower_case_message = message.content.lower()
         if lower_case_message in ['.fam']:
             await self.print_duck_family_or_pgtips_gif(message)
         elif lower_case_message in ['.duckstats', '.dickstats', '.duckstat']:
