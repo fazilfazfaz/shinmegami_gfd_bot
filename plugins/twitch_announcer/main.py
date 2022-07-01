@@ -33,8 +33,8 @@ class TwitchAnnouncer:
         if self.access_key is None or self.access_key_expire_time <= time.time():
             print(f'Fetching twitch key')
             r = requests.post(url='https://id.twitch.tv/oauth2/token', data={
-                'client_id': '8lx85cnqyd599b3jcqa41ps51sdpsp',
-                'client_secret': 'tuhdbb83srot1kzeo8c0yt1aczjefo',
+                'client_id': self.config['TWITCH_CLIENT_ID'],
+                'client_secret': self.config['TWITCH_CLIENT_SECRET'],
                 'grant_type': 'client_credentials'
             })
             assert r.status_code == 200
@@ -46,7 +46,7 @@ class TwitchAnnouncer:
         r = requests.get('https://api.twitch.tv/helix/streams', params={
             'user_login': self.channels_to_track,
         }, headers={
-            'Client-Id': '8lx85cnqyd599b3jcqa41ps51sdpsp',
+            'Client-Id': self.config['TWITCH_CLIENT_ID'],
             'Authorization': 'Bearer ' + self.access_key
         })
         assert r.status_code == 200
