@@ -135,7 +135,7 @@ class DuckHuntGame:
         await message.reply(_message)
 
     def is_duck_catchable(self, channel):
-        return self.current_duck_channel == channel.id
+        return self.last_duck_message is not None and self.last_duck_message.channel.id == channel.id
 
     async def post_no_duck_message(self, message, action_type):
         if action_type == 'befriend':
@@ -174,7 +174,7 @@ class DuckHuntGame:
             message_parts = [
                 'Your duckie fam is here!',
                 '🦆' * user.ducks_befriended,
-                ]
+            ]
         else:
             embed_url = 'https://c.tenor.com/qV4ycK5YEY8AAAAC/shrug-idk.gif'
             message_parts = [

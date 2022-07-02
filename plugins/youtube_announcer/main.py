@@ -10,7 +10,7 @@ from database.models import AnnouncedYoutubeVideo
 
 
 class YoutubeAnnouncer:
-    channels_to_track = []
+    playlists_to_track = []
     client = None
     config = None
     youtube = None
@@ -21,7 +21,7 @@ class YoutubeAnnouncer:
     def __init__(self, client, config):
         self.client = client
         self.config = config
-        self.channels_to_track = config['YT_CHANNELS_TO_TRACK'].split(',')
+        self.playlists_to_track = config['YT_PLAYLISTS_TO_TRACK'].split(',')
 
         for channel in self.client.guilds[0].channels:
             if channel.name == config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
@@ -35,23 +35,23 @@ class YoutubeAnnouncer:
         api_version = 'v3'
         dev_key = config['GOOGLE_API_KEY']
         self.youtube = build(api_service_name, api_version, developerKey=dev_key)
-        asyncio.get_event_loop().create_task(self.check_channels_for_new_videos())
+        asyncio.get_event_loop().create_task(self.check_playlists_for_new_videos())
 
-    async def check_channels_for_new_videos(self):
+    async def check_playlists_for_new_videos(self):
         while True:
             try:
                 self.videos_encountered = self.videos_encountered[-100:]
-                for channel_id in self.channels_to_track:
-                    await self.check_channel_for_new_videos(channel_id)
+                for playlist_id in self.playlists_to_track:
+                    await self.check_playlist_for_new_videos(playlist_id)
             except Exception:
                 pass
             await asyncio.sleep(60)
 
-    async def check_channel_for_new_videos(self, channel_id):
-        print(f'Checking channel {channel_id} for videos')
-        request = self.youtube.search().list(
+    async def check_playlist_for_new_videos(self, playlist_id):
+        print(f'Checking playlist {playlist_id} for videos')
+        request = self.youtube.playlistItems().list(
             part="snippet",
-            channelId=channel_id,
+            playlistId=playlist_id,
             order='date'
         )
         response = request.execute()
