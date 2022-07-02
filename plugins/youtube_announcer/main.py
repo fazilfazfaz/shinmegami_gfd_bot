@@ -43,8 +43,8 @@ class YoutubeAnnouncer:
                 self.videos_encountered = self.videos_encountered[-100:]
                 for playlist_id in self.playlists_to_track:
                     await self.check_playlist_for_new_videos(playlist_id)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f'Failed to fetch yt videos due to error: {str(e)}')
             await asyncio.sleep(60)
 
     async def check_playlist_for_new_videos(self, playlist_id):
@@ -52,7 +52,6 @@ class YoutubeAnnouncer:
         request = self.youtube.playlistItems().list(
             part="snippet",
             playlistId=playlist_id,
-            order='date'
         )
         response = request.execute()
         for video in response['items']:
