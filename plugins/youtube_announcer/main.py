@@ -24,7 +24,7 @@ class YoutubeAnnouncer:
         self.playlists_to_track = config['YT_PLAYLISTS_TO_TRACK'].split(',')
 
         for channel in self.client.guilds[0].channels:
-            if channel.name == config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
+            if str(channel.id) == config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
                 self.channel = channel
                 break
 

@@ -9,7 +9,7 @@ class CommentHearter:
         self.auto_like_channels = config['HEART_CHANNELS'].split(',')
 
     async def on_message(self, message):
-        if message.channel.name in self.auto_like_channels:
+        if str(message.channel.id) in self.auto_like_channels:
             await self.like_message(message)
 
     async def like_message(self, message):

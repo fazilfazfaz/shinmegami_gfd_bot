@@ -148,7 +148,7 @@ class DuckHuntGame:
         channel_selected = random.choice(channels_to_release_in)
         channel = None
         for channel in self.client.guilds[0].channels:
-            if channel.name == channel_selected:
+            if str(channel.id) == channel_selected:
                 break
 
         if channel is None:

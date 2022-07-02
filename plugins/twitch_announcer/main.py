@@ -20,7 +20,7 @@ class TwitchAnnouncer:
         self.channels_to_track = config['TWITCH_CHANNELS_TO_TRACK'].split(',')
 
         for channel in self.client.guilds[0].channels:
-            if channel.name == config['CHANNEL_FOR_TWITCH_ANNOUNCEMENT']:
+            if str(channel.id) == config['CHANNEL_FOR_TWITCH_ANNOUNCEMENT']:
                 self.channel = channel
                 break
 
