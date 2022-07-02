@@ -135,7 +135,9 @@ class DuckHuntGame:
         await message.reply(_message)
 
     def is_duck_catchable(self, channel):
-        return self.last_duck_message is not None and self.last_duck_message.channel.id == channel.id
+        return self.current_duck_channel is not None and \
+               self.last_duck_message is not None and \
+               self.last_duck_message.channel.id == channel.id
 
     async def post_no_duck_message(self, message, action_type):
         if action_type == 'befriend':
