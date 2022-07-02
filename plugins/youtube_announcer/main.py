@@ -15,7 +15,7 @@ class YoutubeAnnouncer:
     config = None
     youtube = None
     channel = None
-    date_format = '%Y-%m-%dT%H:%M:%SZ%Z'
+    date_format = '%Y-%m-%dT%H:%M:%S%z'
     videos_encountered = []
 
     def __init__(self, client, config):
@@ -45,7 +45,7 @@ class YoutubeAnnouncer:
                     await self.check_playlist_for_new_videos(playlist_id)
             except Exception as e:
                 print(f'Failed to fetch yt videos due to error: {str(e)}')
-            await asyncio.sleep(60)
+            await asyncio.sleep(180)
 
     async def check_playlist_for_new_videos(self, playlist_id):
         print(f'Checking playlist {playlist_id} for videos')
@@ -55,7 +55,7 @@ class YoutubeAnnouncer:
         )
         response = request.execute()
         for video in response['items']:
-            dateobj = datetime.datetime.strptime(video['snippet']['publishedAt'] + 'UTC', self.date_format)
+            dateobj = datetime.datetime.strptime(video['snippet']['publishedAt'], self.date_format)
             epoch_time = dateobj.timestamp()
             seconds_elapsed = time.time() - epoch_time
             if seconds_elapsed <= 1800 and video['id'] not in self.videos_encountered:
