@@ -25,10 +25,15 @@ class SmoothieMaker:
         'papaya',
         'protein',
     ]
-    message_prefixes = [
+    self_smoothie_message_formats = [
         'Enjoy this {} 🥤',
         'Here have this {} 🥤',
         'How about a {} 🥤',
+    ]
+    dedicated_smoothie_message_formats = [
+        'Hey <@{to}>, {_from} got you a {smoothie} 🥤',
+        '<@{to}>, {_from} asked me to get you this {smoothie} 🥤',
+        '<@{to}>, {_from} says hi. Oh and here, have this {smoothie} 🥤',
     ]
 
     def __init__(self, client, config):
@@ -36,7 +41,9 @@ class SmoothieMaker:
         self.config = config
 
     async def on_message(self, message):
-        if message.content.lower() in ['.smoothies', '.smoothie']:
+        asked_for_personal_smoothie = message.content.lower() in ['.smoothie', '.smoothies']
+        asked_for_smoothie_dedication = message.content.lower().startswith('.smoothie ')
+        if asked_for_personal_smoothie or asked_for_smoothie_dedication:
             smoothie_name_parts = []
             smoothie_name_parts_options = self.smoothie_components.copy()
             for part in range(random.randint(2, 3)):
@@ -44,5 +51,17 @@ class SmoothieMaker:
                 smoothie_name_parts_options.remove(smoothie_name_part)
                 smoothie_name_parts.append(smoothie_name_part)
             smoothie_name = " ".join(smoothie_name_parts)
-            message_content = random.choice(self.message_prefixes).format(smoothie_name)
+            if asked_for_smoothie_dedication and len(message.mentions) > 0:
+                dedicated_message_text = random.choice(self.dedicated_smoothie_message_formats)
+                message_content = dedicated_message_text.format(to=message.mentions[0].id,
+                                                                _from=message.author.display_name,
+                                                                smoothie=smoothie_name)
+            elif asked_for_smoothie_dedication:
+                target = message.content[10:]
+                if target == '':
+                    message_content = f'I made this {smoothie_name} 🥤\nBut I have nobody to give it to'
+                else:
+                    message_content = f'I made this {smoothie_name} 🥤\nNow who is this {target}?'
+            else:
+                message_content = random.choice(self.self_smoothie_message_formats).format(smoothie_name)
             await message.reply(content=message_content)
