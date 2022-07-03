@@ -4,6 +4,7 @@ from dotenv import dotenv_values
 from database.helper import GFDDatabaseHelper
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
+from plugins.smoothie_maker.main import SmoothieMaker
 from plugins.twitch_announcer.main import TwitchAnnouncer
 from plugins.user_silencer.main import UserSilencer
 from plugins.youtube_announcer.main import YoutubeAnnouncer
@@ -27,9 +28,11 @@ async def on_ready():
     user_silencer = UserSilencer(client, config)
     YoutubeAnnouncer(client, config)
     TwitchAnnouncer(client, config)
+    smoothie_maker = SmoothieMaker(client, config)
 
     @client.event
     async def on_message(message):
+        await smoothie_maker.on_message(message)
         await comment_hearter.on_message(message)
         await duckhunt_game.on_message(message)
         await user_silencer.on_message(message)
