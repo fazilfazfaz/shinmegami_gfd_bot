@@ -58,10 +58,11 @@ class YoutubeAnnouncer:
             dateobj = datetime.datetime.strptime(video['snippet']['publishedAt'], self.date_format)
             epoch_time = dateobj.timestamp()
             seconds_elapsed = time.time() - epoch_time
-            if seconds_elapsed <= 1800 and video['id'] not in self.videos_encountered:
+            video_id = video['id']['videoId']
+            if seconds_elapsed <= 1800 and video_id not in self.videos_encountered:
                 print(f'Trying to post video {video["snippet"]["title"]}')
-                self.videos_encountered.append(video['id'])
-                await self.post_video_to_channel(video['id']['videoId'], video)
+                self.videos_encountered.append(video_id)
+                await self.post_video_to_channel(video_id, video)
 
     async def post_video_to_channel(self, video_id, video):
         GFDDatabaseHelper.replenish_db()
