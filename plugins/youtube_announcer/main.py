@@ -58,7 +58,7 @@ class YoutubeAnnouncer:
             dateobj = datetime.datetime.strptime(video['snippet']['publishedAt'], self.date_format)
             epoch_time = dateobj.timestamp()
             seconds_elapsed = time.time() - epoch_time
-            video_id = video['id']['videoId']
+            video_id = video['snippet']['resourceId']['videoId']
             if seconds_elapsed <= 1800 and video_id not in self.videos_encountered:
                 print(f'Trying to post video {video["snippet"]["title"]}')
                 self.videos_encountered.append(video_id)
