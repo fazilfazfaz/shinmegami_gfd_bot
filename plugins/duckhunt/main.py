@@ -166,7 +166,7 @@ class DuckHuntGame:
         user = User.get_by_message(message)
         GFDDatabaseHelper.release_db()
         embed_url = None
-        if user.ducks_killed > 0:
+        if user.ducks_killed > 0 and user.ducks_killed * 3 > user.ducks_befriended:
             embed_url = 'https://c.tenor.com/4aYkNoeULW4AAAAC/mokey-puppet-monkey.gif'
             message_parts = [
                 'You\'ve shot ducks 😱',
