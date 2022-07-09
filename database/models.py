@@ -28,16 +28,23 @@ class User(BaseModel):
     ducks_killed = BigIntegerField(default=0)
 
     @staticmethod
-    def get_by_message(message):
-        username = message.author.display_name
+    def get_by_author(author):
+        username = author.display_name
         try:
-            user = User.get(User.user_id == message.author.id)
+            user = User.get(User.user_id == author.id)
             if user.username != username and username:
                 user.username = username
                 user.save()
         except DoesNotExist:
-            user = User.create(user_id=message.author.id, username=username)
+            user = User.create(user_id=author.id, username=username)
         return user
+
+    @staticmethod
+    def get_by_message(message):
+        return User.get_by_author(message.author)
+
+    def has_repented_for_shooting_ducks(self):
+        return self.ducks_killed * 3 <= self.ducks_befriended
 
     def add_duck_friend(self):
         self.ducks_befriended += 1

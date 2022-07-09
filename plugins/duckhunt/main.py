@@ -39,13 +39,13 @@ class DuckHuntGame:
         elif lower_case_message in ['.bef', '.befriend', '!bef', '🍕']:
             if not self.is_duck_catchable(message.channel):
                 return await self.post_no_duck_message(message, 'befriend')
-            elif self.should_miss_attempt():
+            elif self.should_miss_attempt(message.author):
                 return await self.post_duck_miss_message(message, 'befriend')
             await self.befriend_duck_for_user(message)
         elif lower_case_message in ['.bang', '.kill', '.bang', '.shoot', '🔫']:
             if not self.is_duck_catchable(message.channel):
                 return await self.post_no_duck_message(message, 'kill')
-            elif self.should_miss_attempt():
+            elif self.should_miss_attempt(message.author):
                 return await self.post_duck_miss_message(message, 'kill')
             await self.kill_duck_for_user(message)
 
@@ -61,6 +61,8 @@ class DuckHuntGame:
                 await self.release_a_duck()
             else:
                 minutes_to_sleep = random.randint(120, 140) * 60
+                if 'DEV_MODE' in self.config and self.config['DEV_MODE'] == 'true':
+                    minutes_to_sleep = 0
                 print(f'Duck to be released after {minutes_to_sleep}')
                 await asyncio.sleep(minutes_to_sleep)
                 await self.release_a_duck()
@@ -110,18 +112,23 @@ class DuckHuntGame:
             ducks_users.append(f'**{member.display_name}**: {bef_count} befriended & {kill_count} shot')
         await channel.send("\n".join(ducks_users))
 
-    def should_miss_attempt(self):
-        chance = self.calculate_hit_chance()
-        if not random.random() <= chance and chance > .05:
+    def should_miss_attempt(self, author):
+        chance = self.calculate_hit_chance(author)
+        randomval = random.random()
+        print(f'Random value: {randomval} chance: {chance}')
+        if not randomval <= chance:
             return True
         return False
 
-    def calculate_hit_chance(self):
+    def calculate_hit_chance(self, author):
         shoot_time = time.time()
         spawn_time = self.last_duck_spawn_time
-        if shoot_time - spawn_time < 1:
-            return .05
-        elif 1 <= shoot_time - spawn_time <= 7:
+        print(f'Shooting delay {shoot_time - spawn_time}')
+        GFDDatabaseHelper.replenish_db()
+        user = User.get_by_author(author)
+        GFDDatabaseHelper.release_db()
+        print(f'User has repented: {user.has_repented_for_shooting_ducks()}')
+        if 1 <= shoot_time - spawn_time <= 10 or not user.has_repented_for_shooting_ducks():
             out = random.uniform(.60, .75)
             return out
         else:
@@ -166,7 +173,7 @@ class DuckHuntGame:
         user = User.get_by_message(message)
         GFDDatabaseHelper.release_db()
         embed_url = None
-        if user.ducks_killed > 0 and user.ducks_killed * 3 > user.ducks_befriended:
+        if user.ducks_killed > 0 and not user.has_repented_for_shooting_ducks():
             embed_url = 'https://c.tenor.com/4aYkNoeULW4AAAAC/mokey-puppet-monkey.gif'
             message_parts = [
                 'You\'ve shot ducks 😱',
