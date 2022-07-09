@@ -16,6 +16,11 @@ class DuckHuntGame:
     last_duck_spawn_time = 0
     last_duck_message = None
 
+    duck_stat_commands = ['.duckstats', '.dickstats', '.duckstat']
+    duck_befriend_commands = ['.bef', '.befriend', '!bef', '🍕']
+    duck_kill_commands = ['.bang', '.kill', '.bang', '.shoot', '🔫']
+    all_duck_commands = []
+
     befriend_miss_messages = ["The duck didn't want to be friends, maybe next time.",
                               "Well this is awkward, the duck needs to think about it.",
                               "The duck said no, maybe bribe it with some pizza? Ducks love pizza don't they?",
@@ -27,27 +32,31 @@ class DuckHuntGame:
     def __init__(self, client, config):
         self.client = client
         self.config = config
+        self.all_duck_commands = set(self.duck_stat_commands + self.duck_befriend_commands + self.duck_kill_commands)
+        self.all_duck_commands.add('.fam')
 
         asyncio.get_event_loop().create_task(self.duck_spawner())
 
     async def on_message(self, message):
         lower_case_message = message.content.lower()
-        if lower_case_message in ['.fam']:
-            await self.print_duck_family_or_pgtips_gif(message)
-        elif lower_case_message in ['.duckstats', '.dickstats', '.duckstat']:
-            await self.print_duck_statistics(message.channel)
-        elif lower_case_message in ['.bef', '.befriend', '!bef', '🍕']:
-            if not self.is_duck_catchable(message.channel):
-                return await self.post_no_duck_message(message, 'befriend')
-            elif self.should_miss_attempt(message.author):
-                return await self.post_duck_miss_message(message, 'befriend')
-            await self.befriend_duck_for_user(message)
-        elif lower_case_message in ['.bang', '.kill', '.bang', '.shoot', '🔫']:
-            if not self.is_duck_catchable(message.channel):
-                return await self.post_no_duck_message(message, 'kill')
-            elif self.should_miss_attempt(message.author):
-                return await self.post_duck_miss_message(message, 'kill')
-            await self.kill_duck_for_user(message)
+        if lower_case_message in self.all_duck_commands:
+            user = self.get_duck_user_from_message_author(message.author)
+            if lower_case_message == '.fam':
+                await self.print_duck_family_or_pgtips_gif(message, user)
+            elif lower_case_message in self.duck_stat_commands:
+                await self.print_duck_statistics(message.channel)
+            elif lower_case_message in self.duck_befriend_commands:
+                if not self.is_duck_catchable(message.channel):
+                    return await self.post_no_duck_message(message, 'befriend')
+                elif self.should_miss_attempt(user):
+                    return await self.post_duck_miss_message(user, message, 'befriend')
+                await self.befriend_duck_for_user(user, message)
+            elif lower_case_message in self.duck_kill_commands:
+                if not self.is_duck_catchable(message.channel):
+                    return await self.post_no_duck_message(message, 'kill')
+                elif self.should_miss_attempt(user):
+                    return await self.post_duck_miss_message(user, message, 'kill')
+                await self.kill_duck_for_user(user, message)
 
     async def duck_spawner(self):
         while True:
@@ -67,11 +76,10 @@ class DuckHuntGame:
                 await asyncio.sleep(minutes_to_sleep)
                 await self.release_a_duck()
 
-    async def befriend_duck_for_user(self, message):
+    async def befriend_duck_for_user(self, user, message):
         self.current_duck_channel = None
         time_to_befriend = math.floor(time.time() - self.last_duck_spawn_time)
         GFDDatabaseHelper.replenish_db()
-        user = User.get_by_message(message)
         user.add_duck_friend()
         GFDDatabaseHelper.release_db()
         message_parts = [
@@ -81,11 +89,10 @@ class DuckHuntGame:
         response_message = '\n'.join(message_parts)
         await message.channel.send(response_message)
 
-    async def kill_duck_for_user(self, message):
+    async def kill_duck_for_user(self, user, message):
         self.current_duck_channel = None
         time_to_befriend = math.floor(time.time() - self.last_duck_spawn_time)
         GFDDatabaseHelper.replenish_db()
-        user = User.get_by_message(message)
         user.add_duck_kill()
         GFDDatabaseHelper.release_db()
         message_parts = [
@@ -112,36 +119,40 @@ class DuckHuntGame:
             ducks_users.append(f'**{member.display_name}**: {bef_count} befriended & {kill_count} shot')
         await channel.send("\n".join(ducks_users))
 
-    def should_miss_attempt(self, author):
-        chance = self.calculate_hit_chance(author)
+    def should_miss_attempt(self, user):
+        chance = self.calculate_hit_chance(user)
         randomval = random.random()
         print(f'Random value: {randomval} chance: {chance}')
         if not randomval <= chance:
             return True
         return False
 
-    def calculate_hit_chance(self, author):
-        shoot_time = time.time()
-        spawn_time = self.last_duck_spawn_time
-        print(f'Shooting delay {shoot_time - spawn_time}')
+    def get_duck_user_from_message_author(self, author):
         GFDDatabaseHelper.replenish_db()
         user = User.get_by_author(author)
         GFDDatabaseHelper.release_db()
+        return user
+
+    def calculate_hit_chance(self, user):
+        shoot_time = time.time()
+        spawn_time = self.last_duck_spawn_time
+        print(f'Shooting delay {shoot_time - spawn_time}')
         print(f'User has repented: {user.has_repented_for_shooting_ducks()}')
         if 1 <= shoot_time - spawn_time <= 10 or not user.has_repented_for_shooting_ducks():
-            out = random.uniform(.60, .75)
+            out = random.uniform(.65, .80)
             return out
         else:
             return 1
 
-    async def post_duck_miss_message(self, message, type):
-        if type == 'befriend':
+    async def post_duck_miss_message(self, user, message, action_type):
+        if action_type == 'befriend':
             _message = random.choice(self.befriend_miss_messages)
         else:
             _message = random.choice(self.kill_miss_messages)
         await message.reply(_message)
 
     def is_duck_catchable(self, channel):
+        print(f'Checking for duck: {self.current_duck_channel} {self.last_duck_message.channel.id} {channel.id}')
         return self.current_duck_channel is not None and \
                self.last_duck_message is not None and \
                self.last_duck_message.channel.id == channel.id
@@ -168,10 +179,7 @@ class DuckHuntGame:
         self.current_duck_channel = channel.id
         self.last_duck_spawn_time = time.time()
 
-    async def print_duck_family_or_pgtips_gif(self, message):
-        GFDDatabaseHelper.replenish_db()
-        user = User.get_by_message(message)
-        GFDDatabaseHelper.release_db()
+    async def print_duck_family_or_pgtips_gif(self, message, user):
         embed_url = None
         if user.ducks_killed > 0 and not user.has_repented_for_shooting_ducks():
             embed_url = 'https://c.tenor.com/4aYkNoeULW4AAAAC/mokey-puppet-monkey.gif'
@@ -184,6 +192,8 @@ class DuckHuntGame:
                 'Your duckie fam is here!',
                 '🦆' * user.ducks_befriended,
             ]
+            if user.ducks_killed > 0:
+                message_parts[1] += '🪦' * user.ducks_killed
         else:
             embed_url = 'https://c.tenor.com/qV4ycK5YEY8AAAAC/shrug-idk.gif'
             message_parts = [
