@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import time
 
-import discord
 from googleapiclient.discovery import build
 
 from database.helper import GFDDatabaseHelper
@@ -70,9 +69,9 @@ class YoutubeAnnouncer:
         GFDDatabaseHelper.release_db()
         if should_announce:
             print(f'Posting video {video["snippet"]["title"]}')
-            thumb_quality = list(video['snippet']['thumbnails'].keys())[-1]
-            embed = discord.Embed()
-            embed.title = video['snippet']['title']
-            embed.set_image(url=video['snippet']['thumbnails'][thumb_quality]['url'])
-            embed.url = 'https://youtu.be/' + video_id
-            await self.channel.send(embed=embed)
+            # thumb_quality = list(video['snippet']['thumbnails'].keys())[-1]
+            # embed = discord.Embed()
+            # embed.title = video['snippet']['title']
+            # embed.set_image(url=video['snippet']['thumbnails'][thumb_quality]['url'])
+            # embed.url = 'https://youtu.be/' + video_id
+            await self.channel.send(content='https://youtu.be/' + video_id)
