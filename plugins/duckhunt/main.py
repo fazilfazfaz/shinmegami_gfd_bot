@@ -9,6 +9,8 @@ import discord
 from database.helper import GFDDatabaseHelper
 from database.models import User
 
+MAX_USER_MISS_COUNT = 1
+
 system_random_generator = secrets.SystemRandom()
 
 
@@ -18,6 +20,7 @@ class DuckHuntGame:
     current_duck_channel = None
     last_duck_spawn_time = 0
     last_duck_message = None
+    current_miss_count = {}
 
     duck_stat_commands = ['.duckstats', '.dickstats', '.duckstat']
     duck_befriend_commands = ['.bef', '.befriend', '!bef', '🍕']
@@ -123,10 +126,17 @@ class DuckHuntGame:
         await channel.send("\n".join(ducks_users))
 
     def should_miss_attempt(self, user):
+        if user.user_id in self.current_miss_count:
+            current_miss_count_for_user = self.current_miss_count[user.user_id]
+            if current_miss_count_for_user >= MAX_USER_MISS_COUNT:
+                return False
+        else:
+            current_miss_count_for_user = 0
         chance = self.calculate_hit_chance(user)
         randomval = system_random_generator.random()
         print(f'Random value: {randomval} chance: {chance}')
         if not randomval <= chance:
+            self.current_miss_count[user.user_id] = current_miss_count_for_user + 1
             return True
         return False
 
@@ -177,6 +187,7 @@ class DuckHuntGame:
         if channel is None:
             return
 
+        self.current_miss_count = {}
         self.last_duck_message = await channel.send('A wild 🦆 has appeared!!')
         print(f'Released a new duck in {channel.name} with message {self.last_duck_message.id}')
         self.current_duck_channel = channel.id
