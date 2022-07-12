@@ -1,12 +1,15 @@
 import asyncio
+import math
 import random
+import secrets
 import time
 
 import discord
-import math
 
 from database.helper import GFDDatabaseHelper
 from database.models import User
+
+system_random_generator = secrets.SystemRandom()
 
 
 class DuckHuntGame:
@@ -121,7 +124,7 @@ class DuckHuntGame:
 
     def should_miss_attempt(self, user):
         chance = self.calculate_hit_chance(user)
-        randomval = random.random()
+        randomval = system_random_generator.random()
         print(f'Random value: {randomval} chance: {chance}')
         if not randomval <= chance:
             return True
@@ -139,7 +142,7 @@ class DuckHuntGame:
         print(f'Shooting delay {shoot_time - spawn_time}')
         print(f'User has repented: {user.has_repented_for_shooting_ducks()}')
         if 1 <= shoot_time - spawn_time <= 10 or not user.has_repented_for_shooting_ducks():
-            out = random.uniform(.65, .80)
+            out = system_random_generator.uniform(.65, .80)
             return out
         else:
             return 1
