@@ -35,6 +35,11 @@ class SmoothieMaker:
         '<@{to}>, {_from} asked me to get you this {smoothie} 🥤',
         '<@{to}>, {_from} says hi. Oh and here, have this {smoothie} 🥤',
     ]
+    herm_dedicated_smoothie_message_formats = [
+        'Thanks {_from} for the {smoothie} 🥤',
+        '{_from} is trying bulk me up',
+        'I cant handle another smoothie right now {_from}',
+    ]
 
     def __init__(self, client, config):
         self.client = client
@@ -52,10 +57,15 @@ class SmoothieMaker:
                 smoothie_name_parts.append(smoothie_name_part)
             smoothie_name = " ".join(smoothie_name_parts)
             if asked_for_smoothie_dedication and len(message.mentions) > 0:
-                dedicated_message_text = random.choice(self.dedicated_smoothie_message_formats)
-                message_content = dedicated_message_text.format(to=message.mentions[0].id,
-                                                                _from=message.author.display_name,
-                                                                smoothie=smoothie_name)
+                if message.mentions[0].id == self.client.user.id:
+                    dedicated_message_text = random.choice(self.herm_dedicated_smoothie_message_formats)
+                    message_content = dedicated_message_text.format(_from=message.author.display_name,
+                                                                    smoothie=smoothie_name)
+                else:
+                    dedicated_message_text = random.choice(self.dedicated_smoothie_message_formats)
+                    message_content = dedicated_message_text.format(to=message.mentions[0].id,
+                                                                    _from=message.author.display_name,
+                                                                    smoothie=smoothie_name)
             elif asked_for_smoothie_dedication:
                 target = message.content[10:]
                 if target == '':
