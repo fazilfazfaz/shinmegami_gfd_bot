@@ -44,7 +44,7 @@ class User(BaseModel):
         return User.get_by_author(message.author)
 
     def has_repented_for_shooting_ducks(self):
-        return self.ducks_killed * 3 <= self.ducks_befriended
+        return self.ducks_killed <= self.ducks_befriended
 
     def add_duck_friend(self):
         self.ducks_befriended += 1

@@ -40,6 +40,7 @@ class DuckHuntGame:
         self.config = config
         self.all_duck_commands = set(self.duck_stat_commands + self.duck_befriend_commands + self.duck_kill_commands)
         self.all_duck_commands.add('.fam')
+        self.all_duck_commands.add('.graves')
 
         asyncio.get_event_loop().create_task(self.duck_spawner())
 
@@ -49,6 +50,8 @@ class DuckHuntGame:
             user = self.get_duck_user_from_message_author(message.author)
             if lower_case_message == '.fam':
                 await self.print_duck_family_or_pgtips_gif(message, user)
+            elif lower_case_message == '.graves':
+                await self.print_duck_graves(message, user)
             elif lower_case_message in self.duck_stat_commands:
                 await self.print_duck_statistics(message.channel)
             elif lower_case_message in self.duck_befriend_commands:
@@ -219,3 +222,16 @@ class DuckHuntGame:
         else:
             embed = None
         await message.reply("\n".join(message_parts), embed=embed)
+
+    async def print_duck_graves(self, message, user):
+        if user.ducks_killed < 1:
+            embed_url = 'https://c.tenor.com/lndtLWwXZC0AAAAi/%D1%87%D1%82%D0%BE.gif'
+            embed = discord.Embed()
+            embed.set_image(url=embed_url)
+            await message.reply(embed=embed)
+        else:
+            message_parts = [
+                'RIP 🌸 🌼 🌻 ✿ ❀ ✾ 💐 🌷',
+                '🪦' * user.ducks_killed
+            ]
+            await message.channel.send("\n".join(message_parts))
