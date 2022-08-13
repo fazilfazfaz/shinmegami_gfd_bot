@@ -234,4 +234,4 @@ class DuckHuntGame:
                 'RIP 🌸 🌼 🌻 ✿ ❀ ✾ 💐 🌷',
                 '🪦' * user.ducks_killed
             ]
-            await message.channel.send("\n".join(message_parts))
+            await message.reply("\n".join(message_parts))
