@@ -42,7 +42,8 @@ class DuckHuntGame:
         self.all_duck_commands.add('.fam')
         self.all_duck_commands.add('.graves')
 
-        asyncio.get_event_loop().create_task(self.duck_spawner())
+        if 'DUCK_CHANNELS' in config:
+            asyncio.get_event_loop().create_task(self.duck_spawner())
 
     async def on_message(self, message):
         lower_case_message = message.content.lower()

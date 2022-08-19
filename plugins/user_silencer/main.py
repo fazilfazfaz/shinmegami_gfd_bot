@@ -12,7 +12,8 @@ class UserSilencer:
     def __init__(self, client, config):
         self.client = client
         self.config = config
-        self.users_to_silence += config['USERS_TO_SILENCE'].split(",")
+        if 'USERS_TO_SILENCE' in config:
+            self.users_to_silence += config['USERS_TO_SILENCE'].split(",")
 
     async def on_message(self, message):
         if str(message.author.id) in self.users_to_silence:

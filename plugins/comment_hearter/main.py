@@ -6,7 +6,8 @@ class CommentHearter:
     def __init__(self, client, config):
         self.client = client
         self.config = config
-        self.auto_like_channels = config['HEART_CHANNELS'].split(',')
+        if 'HEART_CHANNELS' in config:
+            self.auto_like_channels = config['HEART_CHANNELS'].split(',')
 
     async def on_message(self, message):
         if str(message.channel.id) in self.auto_like_channels:

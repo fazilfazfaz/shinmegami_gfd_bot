@@ -20,14 +20,16 @@ class YoutubeAnnouncer:
     def __init__(self, client, config):
         self.client = client
         self.config = config
-        self.playlists_to_track = config['YT_PLAYLISTS_TO_TRACK'].split(',')
+        if 'YT_PLAYLISTS_TO_TRACK' in config:
+            self.playlists_to_track = config['YT_PLAYLISTS_TO_TRACK'].split(',')
 
-        for channel in self.client.guilds[0].channels:
-            if str(channel.id) == config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
-                self.channel = channel
-                break
+        if 'CHANNEL_FOR_YT_ANNOUNCEMENT' in config:
+            for channel in self.client.guilds[0].channels:
+                if str(channel.id) == config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
+                    self.channel = channel
+                    break
 
-        if self.channel is None:
+        if self.channel is None or 'GOOGLE_API_KEY' not in config:
             return
 
         api_service_name = 'youtube'

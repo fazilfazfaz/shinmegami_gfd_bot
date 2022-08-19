@@ -17,14 +17,19 @@ class TwitchAnnouncer:
     def __init__(self, client, config):
         self.client = client
         self.config = config
-        self.channels_to_track = config['TWITCH_CHANNELS_TO_TRACK'].split(',')
+        if 'TWITCH_CHANNELS_TO_TRACK' in config:
+            self.channels_to_track = config['TWITCH_CHANNELS_TO_TRACK'].split(',')
 
-        for channel in self.client.guilds[0].channels:
-            if str(channel.id) == config['CHANNEL_FOR_TWITCH_ANNOUNCEMENT']:
-                self.channel = channel
-                break
+        if 'CHANNEL_FOR_TWITCH_ANNOUNCEMENT' in config:
+            for channel in self.client.guilds[0].channels:
+                if str(channel.id) == config['CHANNEL_FOR_TWITCH_ANNOUNCEMENT']:
+                    self.channel = channel
+                    break
 
         if self.channel is None:
+            return
+
+        if 'TWITCH_CLIENT_ID' not in config or 'TWITCH_CLIENT_SECRET' not in config:
             return
 
         asyncio.get_event_loop().create_task(self.poll_twitch())

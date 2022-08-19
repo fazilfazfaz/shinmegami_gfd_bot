@@ -1,0 +1,4 @@
+git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]
+requests==2.28.0
+peewee==3.15.0
+python-dotenv==0.20.0
