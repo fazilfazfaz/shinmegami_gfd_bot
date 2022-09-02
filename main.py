@@ -26,19 +26,20 @@ client = discord.Client(intents=intents)
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
     GFDDatabaseHelper()
-    comment_hearter = CommentHearter(client, config)
-    duckhunt_game = DuckHuntGame(client, config)
-    user_silencer = UserSilencer(client, config)
-    YoutubeAnnouncer(client, config)
-    TwitchAnnouncer(client, config)
+    # comment_hearter = CommentHearter(client, config)
+    # duckhunt_game = DuckHuntGame(client, config)
+    # user_silencer = UserSilencer(client, config)
+    # YoutubeAnnouncer(client, config)
+    # TwitchAnnouncer(client, config)
     smoothie_maker = SmoothieMaker(client, config)
 
     @client.event
     async def on_message(message):
+        pass
         await smoothie_maker.on_message(message)
-        await comment_hearter.on_message(message)
-        await duckhunt_game.on_message(message)
-        await user_silencer.on_message(message)
+        # await comment_hearter.on_message(message)
+        # await duckhunt_game.on_message(message)
+        # await user_silencer.on_message(message)
 
 
 client.run(TOKEN)
