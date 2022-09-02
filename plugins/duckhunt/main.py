@@ -169,7 +169,7 @@ class DuckHuntGame:
         await message.reply(_message)
 
     def is_duck_catchable(self, channel):
-        print(f'Checking for duck: {self.current_duck_channel} {self.last_duck_message.channel.id} {channel.id}')
+        print(f'Checking for duck: {self.current_duck_channel} {self.last_duck_message} {channel.id}')
         return self.current_duck_channel is not None and \
                self.last_duck_message is not None and \
                self.last_duck_message.channel.id == channel.id

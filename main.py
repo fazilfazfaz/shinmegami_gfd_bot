@@ -4,7 +4,12 @@ import discord
 from dotenv import dotenv_values
 
 from database.helper import GFDDatabaseHelper
+from plugins.comment_hearter.main import CommentHearter
+from plugins.duckhunt.main import DuckHuntGame
 from plugins.smoothie_maker.main import SmoothieMaker
+from plugins.twitch_announcer.main import TwitchAnnouncer
+from plugins.user_silencer.main import UserSilencer
+from plugins.youtube_announcer.main import YoutubeAnnouncer
 
 if not os.path.exists('.env'):
     raise Exception(".env is missing - see .env.example")
