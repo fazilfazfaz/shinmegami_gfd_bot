@@ -1,7 +1,9 @@
 import random
 
+from plugins.base import BasePlugin
 
-class SmoothieMaker:
+
+class SmoothieMaker(BasePlugin):
     client = None
     config = None
     smoothie_components = [
@@ -40,10 +42,6 @@ class SmoothieMaker:
         '{_from} is trying bulk me up',
         'I cant handle another smoothie right now {_from}',
     ]
-
-    def __init__(self, client, config):
-        self.client = client
-        self.config = config
 
     async def on_message(self, message):
         asked_for_personal_smoothie = message.content.lower() in ['.smoothie', '.smoothies']

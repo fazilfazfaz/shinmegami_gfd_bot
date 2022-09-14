@@ -8,13 +8,14 @@ import discord
 
 from database.helper import GFDDatabaseHelper
 from database.models import User
+from plugins.base import BasePlugin
 
 MAX_USER_MISS_COUNT = 1
 
 system_random_generator = secrets.SystemRandom()
 
 
-class DuckHuntGame:
+class DuckHuntGame(BasePlugin):
     client = None
     config = None
     current_duck_channel = None
@@ -35,14 +36,14 @@ class DuckHuntGame:
     kill_miss_messages = ["WHOOSH! You missed the duck completely!", "Your gun jammed!", "Better luck next time.",
                           "WTF!? Who are you Dick Cheney?"]
 
-    def __init__(self, client, config):
-        self.client = client
-        self.config = config
+    def on_ready(self):
+        if self.is_ready():
+            return
         self.all_duck_commands = set(self.duck_stat_commands + self.duck_befriend_commands + self.duck_kill_commands)
         self.all_duck_commands.add('.fam')
         self.all_duck_commands.add('.graves')
 
-        if 'DUCK_CHANNELS' in config:
+        if 'DUCK_CHANNELS' in self.config:
             asyncio.get_event_loop().create_task(self.duck_spawner())
 
     async def on_message(self, message):

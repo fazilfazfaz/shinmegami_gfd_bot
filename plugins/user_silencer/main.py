@@ -2,18 +2,20 @@ import datetime
 import random
 import time
 
+from plugins.base import BasePlugin
 
-class UserSilencer:
+
+class UserSilencer(BasePlugin):
     client = None
     config = None
     users_to_silence = []
     last_silence_times = {}
 
-    def __init__(self, client, config):
-        self.client = client
-        self.config = config
-        if 'USERS_TO_SILENCE' in config:
-            self.users_to_silence += config['USERS_TO_SILENCE'].split(",")
+    def on_ready(self):
+        if self.is_ready():
+            return
+        if 'USERS_TO_SILENCE' in self.config:
+            self.users_to_silence += self.config['USERS_TO_SILENCE'].split(",")
 
     async def on_message(self, message):
         if str(message.author.id) in self.users_to_silence:

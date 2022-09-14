@@ -1,13 +1,16 @@
-class CommentHearter:
+from plugins.base import BasePlugin
+
+
+class CommentHearter(BasePlugin):
     auto_like_channels = []
     client = None
     config = None
 
-    def __init__(self, client, config):
-        self.client = client
-        self.config = config
-        if 'HEART_CHANNELS' in config:
-            self.auto_like_channels = config['HEART_CHANNELS'].split(',')
+    def on_ready(self):
+        if self.is_ready():
+            return
+        if 'HEART_CHANNELS' in self.config:
+            self.auto_like_channels = self.config['HEART_CHANNELS'].split(',')
 
     async def on_message(self, message):
         if str(message.channel.id) in self.auto_like_channels:

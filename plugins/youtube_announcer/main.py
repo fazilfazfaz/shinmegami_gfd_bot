@@ -6,9 +6,10 @@ from googleapiclient.discovery import build
 
 from database.helper import GFDDatabaseHelper
 from database.models import AnnouncedYoutubeVideo
+from plugins.base import BasePlugin
 
 
-class YoutubeAnnouncer:
+class YoutubeAnnouncer(BasePlugin):
     playlists_to_track = []
     client = None
     config = None
@@ -17,24 +18,24 @@ class YoutubeAnnouncer:
     date_format = '%Y-%m-%dT%H:%M:%S%z'
     videos_encountered = []
 
-    def __init__(self, client, config):
-        self.client = client
-        self.config = config
-        if 'YT_PLAYLISTS_TO_TRACK' in config:
-            self.playlists_to_track = config['YT_PLAYLISTS_TO_TRACK'].split(',')
+    def on_ready(self):
+        if self.is_ready():
+            return
+        if 'YT_PLAYLISTS_TO_TRACK' in self.config:
+            self.playlists_to_track = self.config['YT_PLAYLISTS_TO_TRACK'].split(',')
 
-        if 'CHANNEL_FOR_YT_ANNOUNCEMENT' in config:
+        if 'CHANNEL_FOR_YT_ANNOUNCEMENT' in self.config:
             for channel in self.client.guilds[0].channels:
-                if str(channel.id) == config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
+                if str(channel.id) == self.config['CHANNEL_FOR_YT_ANNOUNCEMENT']:
                     self.channel = channel
                     break
 
-        if self.channel is None or 'GOOGLE_API_KEY' not in config:
+        if self.channel is None or 'GOOGLE_API_KEY' not in self.config:
             return
 
         api_service_name = 'youtube'
         api_version = 'v3'
-        dev_key = config['GOOGLE_API_KEY']
+        dev_key = self.config['GOOGLE_API_KEY']
         self.youtube = build(api_service_name, api_version, developerKey=dev_key)
         asyncio.get_event_loop().create_task(self.check_playlists_for_new_videos())
 
