@@ -7,7 +7,7 @@ import time
 import discord
 
 from database.helper import GFDDatabaseHelper
-from database.models import User
+from database.models import User, DuckAttemptLog
 from plugins.base import BasePlugin
 
 MAX_USER_MISS_COUNT = 1
@@ -140,9 +140,14 @@ class DuckHuntGame(BasePlugin):
         chance = self.calculate_hit_chance(user)
         randomval = system_random_generator.random()
         print(f'Random value: {randomval} chance: {chance}')
+        GFDDatabaseHelper.replenish_db()
         if not randomval <= chance:
             self.current_miss_count[user.user_id] = current_miss_count_for_user + 1
+            DuckAttemptLog.create_attempt(user.user_id, chance, randomval, True)
+            GFDDatabaseHelper.release_db()
             return True
+        DuckAttemptLog.create_attempt(user.user_id, chance, randomval, False)
+        GFDDatabaseHelper.release_db()
         return False
 
     def get_duck_user_from_message_author(self, author):

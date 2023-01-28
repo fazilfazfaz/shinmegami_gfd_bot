@@ -53,3 +53,15 @@ class User(BaseModel):
     def add_duck_kill(self):
         self.ducks_killed += 1
         self.save()
+
+
+class DuckAttemptLog(BaseModel):
+    id = BigIntegerField(primary_key=True)
+    user_id = BigIntegerField()
+    chance = DecimalField()
+    random_val = DecimalField()
+    missed = BooleanField()
+
+    @staticmethod
+    def create_attempt(user_id, chance, random_val, missed):
+        return DuckAttemptLog.create(user_id=user_id, chance=chance, random_val=random_val, missed=missed)
