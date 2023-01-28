@@ -1,4 +1,4 @@
-from database.models import User, db, AnnouncedYoutubeVideo
+from database.models import User, db, AnnouncedYoutubeVideo, DuckAttemptLog
 
 
 class GFDDatabaseHelper:
@@ -6,7 +6,8 @@ class GFDDatabaseHelper:
         db.connect()
         db.create_tables([
             User,
-            AnnouncedYoutubeVideo
+            AnnouncedYoutubeVideo,
+            DuckAttemptLog
         ])
         db.commit()
         db.close()
