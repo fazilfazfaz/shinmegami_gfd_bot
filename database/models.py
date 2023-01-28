@@ -56,7 +56,7 @@ class User(BaseModel):
 
 
 class DuckAttemptLog(BaseModel):
-    id = BigIntegerField(primary_key=True)
+    id = BigAutoField()
     user_id = BigIntegerField()
     chance = DecimalField()
     random_val = DecimalField()
