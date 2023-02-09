@@ -25,7 +25,10 @@ class DuckHuntGame(BasePlugin):
 
     duck_stat_commands = ['.duckstats', '.dickstats', '.duckstat']
     duck_befriend_commands = ['.bef', '.befriend', '!bef', '🍕']
-    duck_shoo_commands = ['.shoo', '.shoes', '.shoe', '.shue', '👞', '👟', '🥿', '👢', '🥾', ':booty:']
+    duck_shoo_commands = [
+        '.shoo', '.shoes', '.shoe', '.shue', '👞', '👟', '🥿', '👢', '🥾', ':booty:', '👠', '🩰',
+        '👡', '🎿', '🩴', '⛸', '🛼', '💃'
+    ]
     duck_kill_commands = ['.bang', '.kill', '.bang', '.shoot', '🔫']
     all_duck_commands = []
 
