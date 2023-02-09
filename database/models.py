@@ -26,6 +26,7 @@ class User(BaseModel):
     username = CharField(null=False)
     ducks_befriended = BigIntegerField(default=0)
     ducks_killed = BigIntegerField(default=0)
+    ducks_shooed = BigIntegerField(default=0)
 
     @staticmethod
     def get_by_author(author):
@@ -52,6 +53,10 @@ class User(BaseModel):
 
     def add_duck_kill(self):
         self.ducks_killed += 1
+        self.save()
+
+    def add_duck_shoo(self):
+        self.ducks_shooed += 1
         self.save()
 
 

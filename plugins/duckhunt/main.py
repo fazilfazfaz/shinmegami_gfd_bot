@@ -25,6 +25,7 @@ class DuckHuntGame(BasePlugin):
 
     duck_stat_commands = ['.duckstats', '.dickstats', '.duckstat']
     duck_befriend_commands = ['.bef', '.befriend', '!bef', '🍕']
+    duck_shoo_commands = ['.shoo', '.shoes', '.shoe', '.shue', '👞', '👟', '🥿', '👢', '🥾', ':booty:']
     duck_kill_commands = ['.bang', '.kill', '.bang', '.shoot', '🔫']
     all_duck_commands = []
 
@@ -33,13 +34,20 @@ class DuckHuntGame(BasePlugin):
                               "The duck said no, maybe bribe it with some pizza? Ducks love pizza don't they?",
                               "Who knew ducks could be so picky?"]
 
+    shoo_miss_messages = [
+        "The duck paid no attention.", "That's one metal duck, wont work.",
+        'Duck is here to stay this time, try again?',
+    ]
+
     kill_miss_messages = ["WHOOSH! You missed the duck completely!", "Your gun jammed!", "Better luck next time.",
                           "WTF!? Who are you Dick Cheney?"]
 
     def on_ready(self):
         if self.is_ready():
             return
-        self.all_duck_commands = set(self.duck_stat_commands + self.duck_befriend_commands + self.duck_kill_commands)
+        self.all_duck_commands = set(
+            self.duck_stat_commands + self.duck_befriend_commands + self.duck_kill_commands + self.duck_shoo_commands
+        )
         self.all_duck_commands.add('.fam')
         self.all_duck_commands.add('.graves')
 
@@ -68,6 +76,12 @@ class DuckHuntGame(BasePlugin):
                 elif self.should_miss_attempt(user):
                     return await self.post_duck_miss_message(user, message, 'kill')
                 await self.kill_duck_for_user(user, message)
+            elif lower_case_message in self.duck_shoo_commands:
+                if not self.is_duck_catchable(message.channel):
+                    return await self.post_no_duck_message(message, 'shoo')
+                elif self.should_miss_attempt(user):
+                    return await self.post_duck_miss_message(user, message, 'shoo')
+                await self.shoo_duck_for_user(user, message)
 
     async def duck_spawner(self):
         while True:
@@ -113,13 +127,28 @@ class DuckHuntGame(BasePlugin):
         response_message = '\n'.join(message_parts)
         await message.channel.send(response_message)
 
+    async def shoo_duck_for_user(self, user, message):
+        self.current_duck_channel = None
+        time_to_shoo = math.floor(time.time() - self.last_duck_spawn_time)
+        GFDDatabaseHelper.replenish_db()
+        user.add_duck_shoo()
+        GFDDatabaseHelper.release_db()
+        message_parts = [
+            '<@{}> You shooed a duck away in {} seconds!'.format(message.author.id, time_to_shoo),
+            'Good luck, duck!'
+        ]
+        response_message = '\n'.join(message_parts)
+        await message.channel.send(response_message)
+
     async def print_duck_statistics(self, channel):
         GFDDatabaseHelper.replenish_db()
         befriended_ducks_map = {}
         killed_ducks_map = {}
+        shooed_ducks_count = 0
         for user in User.select():
             befriended_ducks_map[user.user_id] = user.ducks_befriended
             killed_ducks_map[user.user_id] = user.ducks_killed
+            shooed_ducks_count += user.ducks_shooed
         GFDDatabaseHelper.release_db()
         ducks_users = []
         for member in channel.members:
@@ -128,6 +157,8 @@ class DuckHuntGame(BasePlugin):
             bef_count = befriended_ducks_map[member.id] if member.id in befriended_ducks_map else 0
             kill_count = killed_ducks_map[member.id] if member.id in befriended_ducks_map else 0
             ducks_users.append(f'**{member.display_name}**: {bef_count} befriended & {kill_count} shot')
+        ducks_users.append("")
+        ducks_users.append(f'A total of {shooed_ducks_count} ducks have been shooed away')
         await channel.send("\n".join(ducks_users))
 
     def should_miss_attempt(self, user):
@@ -170,6 +201,8 @@ class DuckHuntGame(BasePlugin):
     async def post_duck_miss_message(self, user, message, action_type):
         if action_type == 'befriend':
             _message = random.choice(self.befriend_miss_messages)
+        elif action_type == 'shoo':
+            _message = random.choice(self.shoo_miss_messages)
         else:
             _message = random.choice(self.kill_miss_messages)
         await message.reply(_message)
@@ -183,6 +216,8 @@ class DuckHuntGame(BasePlugin):
     async def post_no_duck_message(self, message, action_type):
         if action_type == 'befriend':
             await message.reply("You tried befriending a non-existent duck, that's hecking creepy.")
+        elif action_type == 'shoo':
+            await message.reply("You tried shooing away a non-existent duck, that's such shoe.")
         else:
             await message.reply("There is no duck. What are you shooting at?")
 
