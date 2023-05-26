@@ -12,7 +12,7 @@ from plugins.base import BasePlugin
 
 class TimeAssistant(BasePlugin):
     time_assist_channels = []
-    pattern = re.compile(r'at (.*?) my time', re.IGNORECASE)
+    pattern = re.compile(r'(^| )at (.*?) my time', re.IGNORECASE)
 
     def __init__(self, client, config):
         super().__init__(client, config)
@@ -29,7 +29,7 @@ class TimeAssistant(BasePlugin):
         else:
             m = self.pattern.search(message.content)
             if m is not None:
-                await self.respond_with_utc_time(message, m.group(1))
+                await self.respond_with_utc_time(message, m.group(2))
 
     async def config_timezone_for_user(self, author: discord.User, message: discord.Message):
         timezone_string = message.content[4:]
