@@ -1,6 +1,5 @@
 import datetime
 import re
-from typing import Optional
 
 import dateparser
 import discord
@@ -48,7 +47,7 @@ class TimeAssistant(BasePlugin):
             await self.set_timezone_for_user(message, author, timezone_string)
 
     @staticmethod
-    def parse_timezone(timezone_string) -> Optional[pytz.tzinfo]:
+    def parse_timezone(timezone_string):
         try:
             timezone = pytz.timezone(timezone_string)
             return timezone
