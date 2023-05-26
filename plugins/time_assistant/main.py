@@ -61,7 +61,7 @@ class TimeAssistant(BasePlugin):
         user = User.get_by_author(message.author)
         GFDDatabaseHelper.release_db()
         if user.timezone is None:
-            await message.reply('I don\t know your timezone, set it with .tz <your timezone>')
+            await message.reply('I don\'t know your timezone, set it with .tz <your timezone>')
             return
         parser_settings = {'TIMEZONE': user.timezone, 'RETURN_AS_TIMEZONE_AWARE': True}
         dt: datetime.datetime = dateparser.parse(time_string, settings=parser_settings)
