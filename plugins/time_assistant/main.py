@@ -64,9 +64,10 @@ class TimeAssistant(BasePlugin):
             await message.reply('I don\'t know your timezone, set it with .tz <your timezone>')
             return
         parser_settings = {'TIMEZONE': user.timezone, 'RETURN_AS_TIMEZONE_AWARE': True}
+        print(message.content, time_string, user.timezone)
         dt: datetime.datetime = dateparser.parse(time_string, settings=parser_settings)
         if dt is not None:
-            print(user.timezone, int(dt.timestamp()))
+            print(dt.timestamp())
             await message.reply(f'That\'s <t:{int(dt.timestamp())}:F>', mention_author=False)
 
     @staticmethod
