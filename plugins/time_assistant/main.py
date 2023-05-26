@@ -16,10 +16,11 @@ class TimeAssistant(BasePlugin):
 
     def __init__(self, client, config):
         super().__init__(client, config)
-        self.time_assist_channels = self.config['TIME_ASSIST_CHANNELS'].split(',')
+        if 'TIME_ASSIST_CHANNELS' in self.config:
+            self.time_assist_channels = self.config['TIME_ASSIST_CHANNELS'].split(',')
 
     async def on_message(self, message):
-        if str(message.channel.id) in self.time_assist_channels:
+        if len(self.time_assist_channels) == 0 or str(message.channel.id) in self.time_assist_channels:
             await self.process_message(message)
 
     async def process_message(self, message: discord.Message):
