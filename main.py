@@ -7,6 +7,7 @@ from database.helper import GFDDatabaseHelper
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
 from plugins.smoothie_maker.main import SmoothieMaker
+from plugins.time_assistant.main import TimeAssistant
 from plugins.twitch_announcer.main import TwitchAnnouncer
 from plugins.user_silencer.main import UserSilencer
 from plugins.youtube_announcer.main import YoutubeAnnouncer
@@ -33,6 +34,7 @@ user_silencer = UserSilencer(client, config)
 youtube_announcer = YoutubeAnnouncer(client, config)
 twitch_announcer = TwitchAnnouncer(client, config)
 smoothie_maker = SmoothieMaker(client, config)
+time_assistant = TimeAssistant(client, config)
 
 
 @client.event
@@ -51,6 +53,7 @@ async def on_message(message):
     await comment_hearter.on_message(message)
     await duckhunt_game.on_message(message)
     await user_silencer.on_message(message)
+    await time_assistant.on_message(message)
 
 
 client.run(TOKEN)

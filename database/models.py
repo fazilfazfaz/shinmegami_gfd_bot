@@ -27,6 +27,7 @@ class User(BaseModel):
     ducks_befriended = BigIntegerField(default=0)
     ducks_killed = BigIntegerField(default=0)
     ducks_shooed = BigIntegerField(default=0)
+    timezone = CharField(null=True)
 
     @staticmethod
     def get_by_author(author):
@@ -57,6 +58,10 @@ class User(BaseModel):
 
     def add_duck_shoo(self):
         self.ducks_shooed += 1
+        self.save()
+
+    def set_timezone(self, timezone):
+        self.timezone = timezone
         self.save()
 
 
