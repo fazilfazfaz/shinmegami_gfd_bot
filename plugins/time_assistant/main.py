@@ -10,9 +10,20 @@ from database.models import User
 from plugins.base import BasePlugin
 
 
+class TimeZoneAlias:
+    def __init__(self, alias_name, alias_shorthand, tz):
+        self.tz = tz
+        self.alias_shorthand = alias_shorthand
+        self.alias_name = alias_name
+
+
 class TimeAssistant(BasePlugin):
     time_assist_channels = []
     pattern = re.compile(r'(^| )at (.*?) my time', re.IGNORECASE)
+    timezone_aliases: dict[str, TimeZoneAlias] = {
+        'Universal Herman Time': TimeZoneAlias('Universal Herman Time', 'UHT', 'America/New_York'),
+        'Universal Cheese Time': TimeZoneAlias('Universal Cheese Time', 'UCT', 'Europe/Paris'),
+    }
 
     def __init__(self, client, config):
         super().__init__(client, config)
@@ -24,7 +35,9 @@ class TimeAssistant(BasePlugin):
             await self.process_message(message)
 
     async def process_message(self, message: discord.Message):
-        if message.content.startswith('.tz '):
+        if message.content == '.tz':
+            await self.show_timezone_for_user(message.author, message)
+        elif message.content.startswith('.tz '):
             await self.config_timezone_for_user(message.author, message)
         else:
             m = self.pattern.search(message.content)
@@ -47,33 +60,57 @@ class TimeAssistant(BasePlugin):
         else:
             await self.set_timezone_for_user(message, author, timezone_string)
 
-    @staticmethod
-    def parse_timezone(timezone_string):
+    @classmethod
+    async def show_timezone_for_user(cls, author: discord.User, message: discord.Message):
+        GFDDatabaseHelper.replenish_db()
+        user = User.get_by_author(author)
+        GFDDatabaseHelper.release_db()
+        if user.timezone is None:
+            await cls.respond_to_message_with_tz_unknown_tip(message)
+            return
+        await message.reply(f'Your timezone is set to {user.timezone} 🕗')
+
+    @classmethod
+    def parse_timezone(cls, timezone_string):
         try:
+            if timezone_string in cls.timezone_aliases:
+                return pytz.timezone(cls.timezone_aliases[timezone_string].alias_name)
             timezone = pytz.timezone(timezone_string)
             return timezone
         except pytz.UnknownTimeZoneError:
             return None
 
     @staticmethod
-    async def respond_with_utc_time(message: discord.Message, time_string):
+    async def respond_to_message_with_tz_unknown_tip(message):
+        message.reply('I don\'t know your timezone, set it with .tz <your timezone>')
+
+    @classmethod
+    async def respond_with_utc_time(cls, message: discord.Message, time_string):
         GFDDatabaseHelper.replenish_db()
         user = User.get_by_author(message.author)
         GFDDatabaseHelper.release_db()
         if user.timezone is None:
-            await message.reply('I don\'t know your timezone, set it with .tz <your timezone>')
+            await cls.respond_to_message_with_tz_unknown_tip(message)
             return
-        parser_settings = {'TIMEZONE': user.timezone, 'RETURN_AS_TIMEZONE_AWARE': True}
-        print(message.content, time_string, user.timezone)
+        resolved_timezone = user.timezone
+        if user.timezone in cls.timezone_aliases:
+            resolved_timezone = cls.timezone_aliases[user.timezone].tz
+        parser_settings = {'TIMEZONE': resolved_timezone, 'RETURN_AS_TIMEZONE_AWARE': True}
+        print(message.content, time_string, resolved_timezone)
         dt: datetime.datetime = dateparser.parse(time_string, settings=parser_settings)
         if dt is not None:
             print(dt.timestamp())
             await message.reply(f'That\'s <t:{int(dt.timestamp())}:F>', mention_author=False)
 
-    @staticmethod
-    def get_timezone_suggestions(timezone_string: str):
+    @classmethod
+    def get_timezone_suggestions(cls, timezone_string: str):
         suggestions = []
         timezone_string_lower = timezone_string.lower()
+        alias_tz: TimeZoneAlias
+        for alias_tz in cls.timezone_aliases.values():
+            if timezone_string_lower in alias_tz.alias_name.lower() \
+                    or timezone_string_lower in alias_tz.alias_shorthand.lower():
+                suggestions.append(alias_tz.alias_name)
         for timezone in pytz.all_timezones:
             if timezone_string_lower in timezone.lower():
                 suggestions.append(timezone)
