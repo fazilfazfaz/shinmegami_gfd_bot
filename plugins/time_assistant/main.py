@@ -23,6 +23,7 @@ class TimeAssistant(BasePlugin):
     timezone_aliases: dict[str, TimeZoneAlias] = {
         'Universal Herman Time': TimeZoneAlias('Universal Herman Time', 'UHT', 'America/New_York'),
         'Universal Cheese Time': TimeZoneAlias('Universal Cheese Time', 'UCT', 'Europe/Paris'),
+        'Universal Mac Time': TimeZoneAlias('Universal Mac Time', 'UMT', 'Europe/Paris'),
     }
 
     def __init__(self, client, config):
