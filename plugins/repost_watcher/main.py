@@ -5,6 +5,7 @@ from plugins.base import BasePlugin
 
 class RepostWatcher(BasePlugin):
     number_emoji_map = {
+        0: '0️⃣',
         1: '1️⃣',
         2: '2️⃣',
         3: '3️⃣',
