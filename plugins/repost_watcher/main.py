@@ -1,12 +1,9 @@
-import re
-
 from database.helper import gfd_links_database_helper
 from database.models import PostedLink
 from plugins.base import BasePlugin
 
 
 class RepostWatcher(BasePlugin):
-    basic_url_regex_pattern = re.compile(r'https?://[^ ]{0,2048}')
     number_emoji_map = {
         1: '1️⃣',
         2: '2️⃣',
@@ -21,13 +18,14 @@ class RepostWatcher(BasePlugin):
 
     async def on_message(self, message):
         reacted = False
-        for link in re.finditer(self.basic_url_regex_pattern, message.clean_content):
-            posted_link = await self.process_link(link)
-            if reacted is False and posted_link.hits > 1:
-                reacted = True
-                for digit in self.emoji_numbers_for_hits(int(posted_link.hits) - 1):
-                    await message.add_reaction(digit)
-                await message.add_reaction('♻')
+        for embed in message.embeds:
+            if embed.url != '':
+                posted_link = await self.process_link(embed.url)
+                if reacted is False and posted_link.hits > 1:
+                    reacted = True
+                    for digit in self.emoji_numbers_for_hits(int(posted_link.hits) - 1):
+                        await message.add_reaction(digit)
+                    await message.add_reaction('♻')
 
     @staticmethod
     async def process_link(link) -> PostedLink:
