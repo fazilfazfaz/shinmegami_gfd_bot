@@ -17,15 +17,19 @@ class RepostWatcher(BasePlugin):
     }
 
     async def on_message(self, message):
-        reacted = False
+        react_count = 0
         for embed in message.embeds:
             if embed.url != '':
                 posted_link = await self.process_link(embed.url)
-                if reacted is False and posted_link.hits > 1:
-                    reacted = True
-                    for digit in self.emoji_numbers_for_hits(int(posted_link.hits) - 1):
-                        await message.add_reaction(digit)
-                    await message.add_reaction('♻')
+                if posted_link.hits > 1:
+                    if react_count == 0:
+                        react_count = int(posted_link.hits) - 1
+                    else:
+                        react_count = min(react_count, int(posted_link.hits) - 1)
+        if react_count > 0:
+            for digit in self.emoji_numbers_for_hits(react_count):
+                await message.add_reaction(digit)
+            await message.add_reaction('♻')
 
     @staticmethod
     async def process_link(link) -> PostedLink:
