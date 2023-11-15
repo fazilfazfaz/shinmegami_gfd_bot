@@ -94,5 +94,9 @@ class PostedLink(Model):
         return PostedLink.get(PostedLink.link == link)
 
     @staticmethod
+    def get_top_links(count: int):
+        return PostedLink.select().order_by(PostedLink.hits.desc()).limit(count)
+
+    @staticmethod
     def create_link(link):
         return PostedLink.create(link=link)
