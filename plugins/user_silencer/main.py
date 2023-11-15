@@ -6,8 +6,6 @@ from plugins.base import BasePlugin
 
 
 class UserSilencer(BasePlugin):
-    client = None
-    config = None
     users_to_silence = []
     last_silence_times = {}
 

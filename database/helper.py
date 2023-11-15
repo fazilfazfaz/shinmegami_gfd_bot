@@ -1,23 +1,29 @@
-from database.models import User, db, AnnouncedYoutubeVideo, DuckAttemptLog
+from database.models import User, db, AnnouncedYoutubeVideo, DuckAttemptLog, db_links, PostedLink
 
 
-class GFDDatabaseHelper:
-    def __init__(self):
-        db.connect()
-        db.create_tables([
-            User,
-            AnnouncedYoutubeVideo,
-            DuckAttemptLog
-        ])
-        db.commit()
-        db.close()
+class BaseDatabaseHelper:
+    def __init__(self, db_conn, models):
+        self.db_conn = db_conn
+        self.db_conn.connect()
+        self.db_conn.create_tables(models)
+        self.db_conn.commit()
+        self.db_conn.close()
 
-    @staticmethod
-    def replenish_db():
-        if not db.is_connection_usable():
-            db.connect()
+    def replenish_db(self):
+        if not self.db_conn.is_connection_usable():
+            self.db_conn.connect()
 
-    @staticmethod
-    def release_db():
-        db.commit()
-        db.close()
+    def release_db(self):
+        self.db_conn.commit()
+        self.db_conn.close()
+
+
+gfd_database_helper = BaseDatabaseHelper(db, [
+    User,
+    AnnouncedYoutubeVideo,
+    DuckAttemptLog
+])
+
+gfd_links_database_helper = BaseDatabaseHelper(db_links, [
+    PostedLink
+])

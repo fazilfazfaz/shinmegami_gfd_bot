@@ -1,6 +1,7 @@
 from peewee import *
 
 db = SqliteDatabase('gfd.db')
+db_links = SqliteDatabase('gfd_links.db')
 
 
 class BaseModel(Model):
@@ -75,3 +76,23 @@ class DuckAttemptLog(BaseModel):
     @staticmethod
     def create_attempt(user_id, chance, random_val, missed):
         return DuckAttemptLog.create(user_id=user_id, chance=chance, random_val=random_val, missed=missed)
+
+
+class PostedLink(Model):
+    class Meta:
+        database = db_links
+
+    id = BigAutoField(primary_key=True)
+    link = TextField(unique=True)
+    hits = IntegerField(default=0)
+
+    def increment_hits(self):
+        self.hits += 1
+
+    @staticmethod
+    def get_by_link(link):
+        return PostedLink.get(PostedLink.link == link)
+
+    @staticmethod
+    def create_link(link):
+        return PostedLink.create(link=link)

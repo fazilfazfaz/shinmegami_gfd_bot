@@ -6,7 +6,7 @@ import time
 
 import discord
 
-from database.helper import GFDDatabaseHelper
+from database.helper import gfd_database_helper
 from database.models import User, DuckAttemptLog
 from plugins.base import BasePlugin
 
@@ -16,8 +16,6 @@ system_random_generator = secrets.SystemRandom()
 
 
 class DuckHuntGame(BasePlugin):
-    client = None
-    config = None
     current_duck_channel = None
     last_duck_spawn_time = 0
     last_duck_message = None
@@ -107,9 +105,9 @@ class DuckHuntGame(BasePlugin):
     async def befriend_duck_for_user(self, user, message):
         self.current_duck_channel = None
         time_to_befriend = math.floor(time.time() - self.last_duck_spawn_time)
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user.add_duck_friend()
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         message_parts = [
             '<@{}> You befriended a duck in {} seconds!'.format(message.author.id, time_to_befriend),
             'You now have {} lil duckie friends.'.format(user.ducks_befriended)
@@ -120,9 +118,9 @@ class DuckHuntGame(BasePlugin):
     async def kill_duck_for_user(self, user, message):
         self.current_duck_channel = None
         time_to_befriend = math.floor(time.time() - self.last_duck_spawn_time)
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user.add_duck_kill()
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         message_parts = [
             '<@{}> You shot a duck in {} seconds!'.format(message.author.id, time_to_befriend),
             'You have shot {} lil ducks.'.format(user.ducks_killed)
@@ -133,9 +131,9 @@ class DuckHuntGame(BasePlugin):
     async def shoo_duck_for_user(self, user, message):
         self.current_duck_channel = None
         time_to_shoo = math.floor(time.time() - self.last_duck_spawn_time)
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user.add_duck_shoo()
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         message_parts = [
             '<@{}> You shooed a duck away in {} seconds!'.format(message.author.id, time_to_shoo),
             'Good luck, duck!'
@@ -144,7 +142,7 @@ class DuckHuntGame(BasePlugin):
         await message.channel.send(response_message)
 
     async def print_duck_statistics(self, channel):
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         befriended_ducks_map = {}
         killed_ducks_map = {}
         shooed_ducks_count = 0
@@ -152,7 +150,7 @@ class DuckHuntGame(BasePlugin):
             befriended_ducks_map[user.user_id] = user.ducks_befriended
             killed_ducks_map[user.user_id] = user.ducks_killed
             shooed_ducks_count += user.ducks_shooed
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         ducks_users = []
         for member in channel.members:
             if self.client.user.id == member.id or member.bot:
@@ -174,20 +172,20 @@ class DuckHuntGame(BasePlugin):
         chance = self.calculate_hit_chance(user)
         randomval = system_random_generator.random()
         print(f'Random value: {randomval} chance: {chance}')
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         if not randomval <= chance:
             self.current_miss_count[user.user_id] = current_miss_count_for_user + 1
             DuckAttemptLog.create_attempt(user.user_id, chance, randomval, True)
-            GFDDatabaseHelper.release_db()
+            gfd_database_helper.release_db()
             return True
         DuckAttemptLog.create_attempt(user.user_id, chance, randomval, False)
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         return False
 
     def get_duck_user_from_message_author(self, author):
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user = User.get_by_author(author)
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         return user
 
     def calculate_hit_chance(self, user):

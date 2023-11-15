@@ -5,7 +5,7 @@ import dateparser
 import discord
 import pytz
 
-from database.helper import GFDDatabaseHelper
+from database.helper import gfd_database_helper
 from database.models import User
 from plugins.base import BasePlugin
 
@@ -63,9 +63,9 @@ class TimeAssistant(BasePlugin):
 
     @classmethod
     async def show_timezone_for_user(cls, author: discord.User, message: discord.Message):
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user = User.get_by_author(author)
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         if user.timezone is None:
             await cls.respond_to_message_with_tz_unknown_tip(message)
             return
@@ -87,9 +87,9 @@ class TimeAssistant(BasePlugin):
 
     @classmethod
     async def respond_with_utc_time(cls, message: discord.Message, time_string):
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user = User.get_by_author(message.author)
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         if user.timezone is None:
             await cls.respond_to_message_with_tz_unknown_tip(message)
             return
@@ -119,9 +119,9 @@ class TimeAssistant(BasePlugin):
 
     @staticmethod
     async def set_timezone_for_user(source_message: discord.Message, author: discord.User, timezone_string: str):
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         user = User.get_by_author(author)
         user.set_timezone(timezone_string)
         user.save()
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         await source_message.reply(f'Your timezone has been set to {timezone_string} 🕗')

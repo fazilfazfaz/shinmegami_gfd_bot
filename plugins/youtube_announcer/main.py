@@ -4,15 +4,13 @@ import time
 
 from googleapiclient.discovery import build
 
-from database.helper import GFDDatabaseHelper
+from database.helper import gfd_database_helper
 from database.models import AnnouncedYoutubeVideo
 from plugins.base import BasePlugin
 
 
 class YoutubeAnnouncer(BasePlugin):
     playlists_to_track = []
-    client = None
-    config = None
     youtube = None
     channel = None
     date_format = '%Y-%m-%dT%H:%M:%S%z'
@@ -67,9 +65,9 @@ class YoutubeAnnouncer(BasePlugin):
                 await self.post_video_to_channel(video_id, video)
 
     async def post_video_to_channel(self, video_id, video):
-        GFDDatabaseHelper.replenish_db()
+        gfd_database_helper.replenish_db()
         should_announce = AnnouncedYoutubeVideo.should_announce(video_id)
-        GFDDatabaseHelper.release_db()
+        gfd_database_helper.release_db()
         if should_announce:
             print(f'Posting video {video["snippet"]["title"]}')
             # thumb_quality = list(video['snippet']['thumbnails'].keys())[-1]

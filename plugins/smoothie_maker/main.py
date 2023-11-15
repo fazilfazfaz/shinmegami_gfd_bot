@@ -4,8 +4,6 @@ from plugins.base import BasePlugin
 
 
 class SmoothieMaker(BasePlugin):
-    client = None
-    config = None
     smoothie_components = [
         'strawberry',
         'kiwi',

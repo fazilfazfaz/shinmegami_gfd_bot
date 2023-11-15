@@ -1,5 +1,7 @@
 class BasePlugin:
     started = False
+    client = None
+    config = None
 
     def __init__(self, client, config):
         self.client = client

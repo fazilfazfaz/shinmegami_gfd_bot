@@ -10,8 +10,6 @@ from plugins.base import BasePlugin
 class TwitchAnnouncer(BasePlugin):
     channels_to_track = []
     live_channels = set([])
-    client = None
-    config = None
     channel = None
     access_key = None
     access_key_expire_time = None
