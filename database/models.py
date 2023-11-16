@@ -95,7 +95,7 @@ class PostedLink(Model):
 
     @staticmethod
     def get_by_link(link):
-        return PostedLink.get(PostedLink.link == link)
+        return PostedLink.get_or_none(PostedLink.link == link)
 
     @staticmethod
     def get_top_links(count: int):
