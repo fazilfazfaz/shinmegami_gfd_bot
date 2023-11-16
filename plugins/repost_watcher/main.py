@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 import discord
 
@@ -58,7 +59,7 @@ class RepostWatcher(BasePlugin):
             await message.reply('I need a link to work with 🏺🪙')
             return
         gfd_links_database_helper.replenish_db()
-        posted_link: PostedLink = PostedLink.get_by_link(m.group(1))
+        posted_link: Optional[PostedLink] = PostedLink.get_by_link(m.group(1))
         gfd_links_database_helper.release_db()
         if posted_link is None:
             embed_url = 'https://media.tenor.com/v6FjukZCkggAAAAd/i-dont-know-what-that-is-data.gif'
