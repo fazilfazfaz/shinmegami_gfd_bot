@@ -11,7 +11,7 @@ from plugins.base import BasePlugin
 class RepostWatcher(BasePlugin):
     link_regex = r'https?://[^\s]{1,2048}'
     basic_url_regex_pattern = re.compile(link_regex, re.DOTALL)
-    link_count_msg_pattern = re.compile(r'\.linkcount <?(' + link_regex + ')>?', re.DOTALL)
+    link_count_msg_pattern = re.compile(r'\.linkcount <?(' + link_regex + ')', re.DOTALL)
 
     async def on_message(self, message):
         if message.content == '.toplinks':
@@ -22,7 +22,9 @@ class RepostWatcher(BasePlugin):
             return
         reacted = False
         for link in re.finditer(self.basic_url_regex_pattern, message.content):
-            posted_link = await self.process_link(link.group(0))
+            actual_link = link.group(0)
+            actual_link = self.clean_link(actual_link)
+            posted_link = await self.process_link(actual_link)
             if reacted is False and posted_link.hits > 1:
                 reacted = True
                 await message.add_reaction('♻')
@@ -59,7 +61,7 @@ class RepostWatcher(BasePlugin):
             await message.reply('I need a link to work with 🏺🪙')
             return
         gfd_links_database_helper.replenish_db()
-        posted_link: Optional[PostedLink] = PostedLink.get_by_link(m.group(1))
+        posted_link: Optional[PostedLink] = PostedLink.get_by_link(self.clean_link(m.group(1)))
         gfd_links_database_helper.release_db()
         if posted_link is None:
             embed_url = 'https://media.tenor.com/v6FjukZCkggAAAAd/i-dont-know-what-that-is-data.gif'
@@ -68,3 +70,7 @@ class RepostWatcher(BasePlugin):
             await message.reply(embed=embed)
             return
         await message.reply(f'I\'ve seen this {posted_link.get_hits_times_text()} in the past')
+
+    @staticmethod
+    def clean_link(actual_link):
+        return actual_link.strip('<>')
