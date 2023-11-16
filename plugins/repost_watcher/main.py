@@ -11,7 +11,7 @@ from plugins.base import BasePlugin
 class RepostWatcher(BasePlugin):
     link_regex = r'https?://[^\s]{1,2048}'
     basic_url_regex_pattern = re.compile(link_regex, re.DOTALL)
-    link_count_msg_pattern = re.compile(r'\.linkcount (' + link_regex + ')', re.DOTALL)
+    link_count_msg_pattern = re.compile(r'\.linkcount <?(' + link_regex + ')>?', re.DOTALL)
 
     async def on_message(self, message):
         if message.content == '.toplinks':
