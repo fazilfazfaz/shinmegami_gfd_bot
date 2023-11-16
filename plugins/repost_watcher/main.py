@@ -55,7 +55,7 @@ class RepostWatcher(BasePlugin):
     async def post_link_count(self, message):
         m = self.link_count_msg_pattern.search(message.content)
         if m is None:
-            await message.reply('I need a link to work with 🪙')
+            await message.reply('I need a link to work with 🏺🪙')
             return
         gfd_links_database_helper.replenish_db()
         posted_link: PostedLink = PostedLink.get_by_link(m.group(1))
