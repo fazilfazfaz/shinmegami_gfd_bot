@@ -89,6 +89,10 @@ class PostedLink(Model):
     def increment_hits(self):
         self.hits += 1
 
+    def get_hits_times_text(self):
+        times = 'times' if self.hits > 1 else 'time'
+        return f'{self.hits} {times}'
+
     @staticmethod
     def get_by_link(link):
         return PostedLink.get(PostedLink.link == link)

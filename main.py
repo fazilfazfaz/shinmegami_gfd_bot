@@ -49,7 +49,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.author.id == config['BOT_USER_ID']:
+    if message.author.id == int(config['BOT_USER_ID']):
         return
     await smoothie_maker.on_message(message)
     await comment_hearter.on_message(message)
