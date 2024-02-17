@@ -11,6 +11,7 @@ from plugins.time_assistant.main import TimeAssistant
 from plugins.twitch_announcer.main import TwitchAnnouncer
 from plugins.user_message_responder.main import UserMessageResponder
 from plugins.user_silencer.main import UserSilencer
+from plugins.voice_announcer.main import VoiceAnnouncer
 from plugins.youtube_announcer.main import YoutubeAnnouncer
 
 if not os.path.exists('.env'):
@@ -37,6 +38,7 @@ smoothie_maker = SmoothieMaker(client, config)
 time_assistant = TimeAssistant(client, config)
 repost_watcher = RepostWatcher(client, config)
 user_message_responder = UserMessageResponder(client, config)
+voice_announcer = VoiceAnnouncer(client, config)
 
 
 @client.event
@@ -48,6 +50,7 @@ async def on_ready():
     youtube_announcer.on_ready()
     twitch_announcer.on_ready()
     user_message_responder.on_ready()
+    voice_announcer.on_ready()
 
 
 @client.event
@@ -62,5 +65,8 @@ async def on_message(message):
     await repost_watcher.on_message(message)
     await user_message_responder.on_message(message)
 
+@client.event
+async def on_voice_state_update(member, before, after):
+    await voice_announcer.voice_status_update(member, before, after)
 
 client.run(TOKEN)
