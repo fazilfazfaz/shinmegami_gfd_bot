@@ -3,6 +3,7 @@ import os.path
 import discord
 from dotenv import dotenv_values
 
+from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
 from plugins.repost_watcher.main import RepostWatcher
@@ -39,6 +40,7 @@ time_assistant = TimeAssistant(client, config)
 repost_watcher = RepostWatcher(client, config)
 user_message_responder = UserMessageResponder(client, config)
 voice_announcer = VoiceAnnouncer(client, config)
+banner_randomizer = BannerRandomizer(client, config)
 
 
 @client.event
@@ -51,6 +53,7 @@ async def on_ready():
     twitch_announcer.on_ready()
     user_message_responder.on_ready()
     voice_announcer.on_ready()
+    banner_randomizer.on_ready()
 
 
 @client.event
@@ -65,8 +68,10 @@ async def on_message(message):
     await repost_watcher.on_message(message)
     await user_message_responder.on_message(message)
 
+
 @client.event
 async def on_voice_state_update(member, before, after):
     await voice_announcer.voice_status_update(member, before, after)
+
 
 client.run(TOKEN)
