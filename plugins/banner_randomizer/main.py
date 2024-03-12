@@ -38,7 +38,7 @@ class BannerRandomizer(BasePlugin):
         self.start_runner()
 
     async def on_message(self, message: discord.Message):
-        if message.content.lower() == '.banner':
+        if self.banner_ban_user_id is not None and message.content.lower() == '.banner':
             if message.author.id != self.banner_ban_user_id:
                 await message.reply('You are not allowed to do that')
                 return
