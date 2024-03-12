@@ -67,6 +67,7 @@ async def on_message(message):
     await time_assistant.on_message(message)
     await repost_watcher.on_message(message)
     await user_message_responder.on_message(message)
+    await banner_randomizer.on_message(message)
 
 
 @client.event

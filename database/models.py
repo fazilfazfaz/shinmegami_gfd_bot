@@ -104,3 +104,14 @@ class PostedLink(Model):
     @staticmethod
     def create_link(link):
         return PostedLink.create(link=link)
+
+
+class BannedBannerMessage(Model):
+    class Meta:
+        database = db
+
+    message_id = BigIntegerField(primary_key=True)
+
+    @staticmethod
+    def get_by_message_id(message_id):
+        return BannedBannerMessage.get_or_none(BannedBannerMessage.message_id == message_id)
