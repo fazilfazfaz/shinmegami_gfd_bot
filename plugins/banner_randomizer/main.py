@@ -6,6 +6,7 @@ from asyncio import Task
 from random import randrange
 
 import discord
+import peewee
 
 from database.helper import gfd_database_helper
 from database.models import BannedBannerMessage
@@ -44,8 +45,12 @@ class BannerRandomizer(BasePlugin):
     async def on_message(self, message: discord.Message):
         if message.content.lower() == '.banner' and self.last_banner_message is not None:
             gfd_database_helper.replenish_db()
-            BannedBannerMessage.create(message_id=self.last_banner_message.id)
-            gfd_database_helper.release_db()
+            try:
+                BannedBannerMessage.create(message_id=self.last_banner_message.id)
+            except peewee.PeeweeException as e:
+                return
+            finally:
+                gfd_database_helper.release_db()
             print("Banned banner message " + str(self.last_banner_message.id))
             self.restart_runner()
             await message.reply(f'Got it, skipping ||{self.last_banner_message.jump_url}||', suppress_embeds=True)
