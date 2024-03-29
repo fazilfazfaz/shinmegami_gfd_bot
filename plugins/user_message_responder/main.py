@@ -11,6 +11,7 @@ from plugins.base import BasePlugin
 
 class ResponseConditionType(str, Enum):
     HAS_GIF = 'HAS_GIF'
+    EXACT_TEXT = 'EXACT_TEXT'
     HAS_TEXT = 'HAS_TEXT'
     NOT_IN_CHANNEL = 'NOT_IN_CHANNEL'
 
@@ -70,6 +71,9 @@ class UserMessageResponder(BasePlugin):
                         return False
                 elif condition.condition_type == ResponseConditionType.HAS_TEXT:
                     if condition.value.lower() not in message.content.lower():
+                        return False
+                elif condition.condition_type == ResponseConditionType.EXACT_TEXT:
+                    if condition.value.lower() != message.content.lower():
                         return False
                 elif condition.condition_type == ResponseConditionType.NOT_IN_CHANNEL:
                     channels = condition.value.split(',')

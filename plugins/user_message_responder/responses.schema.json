@@ -30,6 +30,7 @@
               "enum": [
                 "HAS_GIF",
                 "HAS_TEXT",
+                "EXACT_TEXT",
                 "NOT_IN_CHANNEL"
               ]
             },
