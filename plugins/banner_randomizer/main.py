@@ -61,7 +61,7 @@ class BannerRandomizer(BasePlugin):
                 f'Got it, banning ||{self.last_banner_message.jump_url}|| forever',
                 suppress_embeds=True
             )
-        elif message_content_lower == '.shuffle-banner':
+        elif message_content_lower == '.shuffle':
             current_timestamp = int(time.time())
             author_id = message.author.id
             if author_id in self.user_last_shuffle_time \
