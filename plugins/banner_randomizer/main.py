@@ -20,6 +20,7 @@ class BannerRandomizer(BasePlugin):
     last_banner_message: discord.Message = None
     banned_message_author_ids: set[int] = []
     run_task: Task = None
+    user_last_shuffle_time: dict[int, int] = {}
 
     def on_ready(self):
         if self.is_ready():
@@ -43,17 +44,35 @@ class BannerRandomizer(BasePlugin):
         self.start_runner()
 
     async def on_message(self, message: discord.Message):
-        if message.content.lower() == '.banner' and self.last_banner_message is not None:
+        message_content_lower = message.content.lower()
+        if message_content_lower == '.banner':
+            if self.last_banner_message is None:
+                return
             gfd_database_helper.replenish_db()
             try:
                 BannedBannerMessage.create(message_id=self.last_banner_message.id)
-            except peewee.PeeweeException as e:
+            except peewee.PeeweeException:
                 return
             finally:
                 gfd_database_helper.release_db()
             print("Banned banner message " + str(self.last_banner_message.id))
             self.restart_runner()
-            await message.reply(f'Got it, skipping ||{self.last_banner_message.jump_url}||', suppress_embeds=True)
+            await message.reply(
+                f'Got it, banning ||{self.last_banner_message.jump_url}|| forever',
+                suppress_embeds=True
+            )
+        elif message_content_lower == '.shuffle-banner':
+            current_timestamp = int(time.time())
+            author_id = message.author.id
+            if author_id in self.user_last_shuffle_time \
+                    and current_timestamp - self.user_last_shuffle_time[author_id] < 300:
+                await message.reply('You are too fast, slow down 🐢')
+                return
+            self.user_last_shuffle_time[author_id] = current_timestamp
+            self.restart_runner()
+            await message.reply('I\'ve jazzed it up 🎲')
+        elif 'banner?' in message_content_lower:
+            await message.reply(f'The banner is {self.last_banner_message.jump_url}')
 
     async def run(self):
         epoch_from = self.banner_from_epoch
