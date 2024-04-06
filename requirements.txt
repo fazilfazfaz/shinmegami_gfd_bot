@@ -4,4 +4,4 @@ python-dotenv==0.20.0
 pytz==2023.3
 dateparser==1.1.8
 jsonschema==4.21.1
-Pillow==9.5.0
+Pillow==10.3.0
