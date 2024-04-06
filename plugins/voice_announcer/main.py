@@ -51,6 +51,7 @@ class VoiceAnnouncer(BasePlugin):
                     participants.append(f'* <@{member_id}> {participation_time}')
                 participants_list_txt = "\n".join(participants)
                 message = f'VC has ended :(\nThanks to all the participants!\n{participants_list_txt}'
+                del self.vc_participants[before.channel.id]
                 for channel in self.vc_announce_channels:
                     await channel.send(message, mention_author=False)
                 return
