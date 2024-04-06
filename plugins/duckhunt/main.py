@@ -159,14 +159,14 @@ class DuckHuntGame(BasePlugin):
                 continue
             user_stats_parts = []
             if member.id in befriended_ducks_map and befriended_ducks_map[member.id] > 0:
-                user_stats_parts.append(f'`{befriended_ducks_map[member.id]} befriended`')
+                user_stats_parts.append(f'{befriended_ducks_map[member.id]} befriended')
             if member.id in killed_ducks_map and killed_ducks_map[member.id] > 0:
-                user_stats_parts.append(f'`{killed_ducks_map[member.id]} shot`')
+                user_stats_parts.append(f'{killed_ducks_map[member.id]} shot')
             if member.id in shooed_ducks_map and shooed_ducks_map[member.id] > 0:
-                user_stats_parts.append(f'`{shooed_ducks_map[member.id]} shooed`')
+                user_stats_parts.append(f'{shooed_ducks_map[member.id]} shooed')
             if len(user_stats_parts) == 0:
                 continue
-            ducks_users.append(f'**{member.display_name}**: {" ".join(user_stats_parts)}')
+            ducks_users.append(f'**{member.display_name}**: {" & ".join(user_stats_parts)}')
         ducks_users.append("")
         ducks_users.append(f'A total of {shooed_ducks_count} ducks have been shooed away')
         await channel.send("\n".join(ducks_users))

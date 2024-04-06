@@ -6,6 +6,7 @@ from dotenv import dotenv_values
 from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
+from plugins.icon_flipper.main import IconFlipper
 from plugins.repost_watcher.main import RepostWatcher
 from plugins.smoothie_maker.main import SmoothieMaker
 from plugins.time_assistant.main import TimeAssistant
@@ -41,6 +42,7 @@ repost_watcher = RepostWatcher(client, config)
 user_message_responder = UserMessageResponder(client, config)
 voice_announcer = VoiceAnnouncer(client, config)
 banner_randomizer = BannerRandomizer(client, config)
+icon_flipper = IconFlipper(client, config)
 
 
 @client.event
@@ -54,6 +56,7 @@ async def on_ready():
     user_message_responder.on_ready()
     voice_announcer.on_ready()
     banner_randomizer.on_ready()
+    icon_flipper.on_ready()
 
 
 @client.event
