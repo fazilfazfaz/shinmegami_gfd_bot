@@ -145,19 +145,28 @@ class DuckHuntGame(BasePlugin):
         gfd_database_helper.replenish_db()
         befriended_ducks_map = {}
         killed_ducks_map = {}
+        shooed_ducks_map = {}
         shooed_ducks_count = 0
         for user in User.select():
             befriended_ducks_map[user.user_id] = user.ducks_befriended
             killed_ducks_map[user.user_id] = user.ducks_killed
+            shooed_ducks_map[user.user_id] = user.ducks_shooed
             shooed_ducks_count += user.ducks_shooed
         gfd_database_helper.release_db()
         ducks_users = []
         for member in channel.members:
             if self.client.user.id == member.id or member.bot:
                 continue
-            bef_count = befriended_ducks_map[member.id] if member.id in befriended_ducks_map else 0
-            kill_count = killed_ducks_map[member.id] if member.id in befriended_ducks_map else 0
-            ducks_users.append(f'**{member.display_name}**: {bef_count} befriended & {kill_count} shot')
+            user_stats_parts = []
+            if member.id in befriended_ducks_map and befriended_ducks_map[member.id] > 0:
+                user_stats_parts.append(f'`{befriended_ducks_map[member.id]} befriended`')
+            if member.id in killed_ducks_map and killed_ducks_map[member.id] > 0:
+                user_stats_parts.append(f'`{killed_ducks_map[member.id]} shot`')
+            if member.id in shooed_ducks_map and shooed_ducks_map[member.id] > 0:
+                user_stats_parts.append(f'`{shooed_ducks_map[member.id]} shooed`')
+            if len(user_stats_parts) == 0:
+                continue
+            ducks_users.append(f'**{member.display_name}**: {" ".join(user_stats_parts)}')
         ducks_users.append("")
         ducks_users.append(f'A total of {shooed_ducks_count} ducks have been shooed away')
         await channel.send("\n".join(ducks_users))
