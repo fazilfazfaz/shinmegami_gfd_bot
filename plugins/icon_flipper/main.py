@@ -59,4 +59,4 @@ class IconFlipper(BasePlugin):
         day_delta = datetime.timedelta(hours=24)
         target_hour = now.replace(hour=hour, minute=0, second=0, microsecond=0)
         target_delta = day_delta - (now - target_hour)
-        return target_delta.total_seconds() % (24 * 3600)
+        return int(target_delta.total_seconds() % (24 * 3600))
