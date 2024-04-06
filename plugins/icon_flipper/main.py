@@ -39,20 +39,26 @@ class IconFlipper(BasePlugin):
         while True:
             try:
                 sleep_seconds = randrange(self.icon_flipper_hours_min, self.icon_flipper_hours_max) * 60 * 60
-                print(f'Waiting f{sleep_seconds} to flip the image')
+                print(f'Waiting {sleep_seconds} to flip the image')
                 await asyncio.sleep(sleep_seconds)
-                icon_bytes = io.BytesIO()
-                icon_bytes_flipped = io.BytesIO()
-                guild: discord.Guild = self.client.guilds[0]
-                await guild.icon.save(icon_bytes)
-                icon_image = Image.open(icon_bytes)
-                icon_image_flipped = icon_image.transpose(method=Image.Transpose.FLIP_LEFT_RIGHT)
-                icon_image_flipped.save(icon_bytes_flipped, icon_image.format)
-                icon_bytes_flipped.seek(0)
-                await guild.edit(icon=icon_bytes_flipped.read())
+                print('Flipping the channel icon')
+                await self.flip_channel_icon()
                 sleep_seconds = randrange(self.icon_flipper_minutes_min, self.icon_flipper_minutes_max) * 60
-                print(f'Waiting f{sleep_seconds} to flip the image back')
+                print(f'Waiting {sleep_seconds} to flip the image back')
                 await asyncio.sleep(sleep_seconds)
+                print('Flipping the channel icon back')
+                await self.flip_channel_icon()
             except Exception as e:
                 print('Exception while sleeping for flipper', str(e))
                 pass
+
+    async def flip_channel_icon(self):
+        icon_bytes = io.BytesIO()
+        icon_bytes_flipped = io.BytesIO()
+        guild: discord.Guild = self.client.guilds[0]
+        await guild.icon.save(icon_bytes)
+        icon_image = Image.open(icon_bytes)
+        icon_image_flipped = icon_image.transpose(method=Image.Transpose.FLIP_LEFT_RIGHT)
+        icon_image_flipped.save(icon_bytes_flipped, icon_image.format)
+        icon_bytes_flipped.seek(0)
+        await guild.edit(icon=icon_bytes_flipped.read())
