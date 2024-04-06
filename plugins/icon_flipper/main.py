@@ -12,7 +12,7 @@ class IconFlipper(BasePlugin):
     icon_flipper_hours_start: int
     icon_flipper_hours_end: int
 
-    async def on_ready(self):
+    def on_ready(self):
         if self.is_ready():
             return
         if 'ICON_FLIPPER_HOURS_START' in self.config:
@@ -23,8 +23,7 @@ class IconFlipper(BasePlugin):
             self.icon_flipper_hours_end = int(self.config['ICON_FLIPPER_HOURS_END'])
         else:
             return
-        await self.flip_channel_icon()
-        # asyncio.get_event_loop().create_task(self.run())
+        asyncio.get_event_loop().create_task(self.run())
 
     async def run(self):
         while True:
