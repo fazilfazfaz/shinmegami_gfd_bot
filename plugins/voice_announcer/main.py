@@ -63,7 +63,7 @@ class VoiceAnnouncer(BasePlugin):
                     )
         elif before.channel is not None and after.channel is None:
             channel_id = before.channel.id
-            if channel_id not in self.vc_participants or len(self.vc_participants) == 0:
+            if channel_id not in self.vc_participants or len(self.vc_participants[channel_id]) == 0:
                 return
             vc_participants = self.vc_participants[channel_id]
             vc_participants[member.id].time_slices[-1].set_end_time(current_epoch)
