@@ -9,7 +9,7 @@ from plugins.base import BasePlugin
 
 class VcParticipationTimeSlice:
     start_time: int
-    end_time: int
+    end_time: int = -1
 
     def __init__(self, start_time: int):
         self.start_time = start_time
@@ -24,6 +24,7 @@ class VcParticipant:
 
     def __init__(self, author_id: int):
         self.author_id = author_id
+        self.time_slices = []
 
 
 class VoiceAnnouncer(BasePlugin):
@@ -46,26 +47,27 @@ class VoiceAnnouncer(BasePlugin):
         if before.channel is None and after.channel is not None:
             channel_id = after.channel.id
             on_channel_text = f' on <#{channel_id}>' if len(self.voice_channels) > 1 else ''
-            if len(after.channel.members) == 1:
+            if channel_id not in self.vc_participants:
                 self.vc_participants[channel_id] = dict()
+            if member.id not in self.vc_participants[channel_id]:
+                participant = VcParticipant(member.id)
+                self.vc_participants[channel_id][member.id] = participant
+            else:
+                participant = self.vc_participants[channel_id][member.id]
+            participant.time_slices.append(VcParticipationTimeSlice(current_epoch))
+            if len(after.channel.members) == 1:
                 for channel in self.vc_announce_channels:
                     await channel.send(
                         f'<@{member.id}> has started a VC' + on_channel_text,
                         allowed_mentions=discord.AllowedMentions(users=False)
                     )
-            elif channel_id not in self.vc_participants:
-                return
-            if member.id not in self.vc_participants[channel_id]:
-                participant = VcParticipant(member.id)
-                self.vc_participants[channel_id][member.id] = participant
-            self.vc_participants[channel_id][member.id].time_slices.append(VcParticipationTimeSlice(current_epoch))
         elif before.channel is not None and after.channel is None:
             channel_id = before.channel.id
-            on_channel_text = f' on <#{channel_id}>' if len(self.voice_channels) > 1 else ''
             if channel_id not in self.vc_participants:
                 return
             vc_participants = self.vc_participants[channel_id]
             vc_participants[member.id].time_slices[-1].set_end_time(current_epoch)
+            on_channel_text = f' on <#{channel_id}>' if len(self.voice_channels) > 1 else ''
             if len(before.channel.members) == 0:
                 msg_prefix = f'VC{on_channel_text} has ended :('
                 if len(vc_participants) > 1:
@@ -81,6 +83,7 @@ class VoiceAnnouncer(BasePlugin):
                     message = f'{msg_prefix}\nThanks to all the participants!\n{participants_list_txt}'
                 else:
                     message = f'{msg_prefix}\nThat was a lonely one, sorry <@{member.id}>'
+                del vc_participants
                 del self.vc_participants[channel_id]
                 for channel in self.vc_announce_channels:
                     await channel.send(message, allowed_mentions=discord.AllowedMentions(users=False))
