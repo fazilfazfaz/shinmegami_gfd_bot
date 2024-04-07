@@ -20,7 +20,7 @@ class VcParticipationTimeSlice:
 
 class VcParticipant:
     author_id: int
-    time_slices: list[VcParticipationTimeSlice]
+    time_slices: list[VcParticipationTimeSlice] = []
 
     def __init__(self, author_id: int):
         self.author_id = author_id
