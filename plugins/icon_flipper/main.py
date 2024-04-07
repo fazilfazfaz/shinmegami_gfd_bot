@@ -29,13 +29,14 @@ class IconFlipper(BasePlugin):
         while True:
             try:
                 sleep_seconds = self.get_seconds_until_hour(self.icon_flipper_hours_start)
-                print(f'Waiting {sleep_seconds} to flip the image')
-                await asyncio.sleep(sleep_seconds)
-                print('Flipping the channel icon')
-                await self.flip_channel_icon()
-                sleep_seconds = self.get_seconds_until_hour(self.icon_flipper_hours_end)
-                print(f'Waiting {sleep_seconds} to flip the image back')
-                await asyncio.sleep(sleep_seconds)
+                flip_back_sleep_seconds = self.get_seconds_until_hour(self.icon_flipper_hours_end)
+                if sleep_seconds < flip_back_sleep_seconds:
+                    print(f'Waiting {sleep_seconds} to flip the image')
+                    await asyncio.sleep(sleep_seconds)
+                    print('Flipping the channel icon')
+                    await self.flip_channel_icon()
+                print(f'Waiting {flip_back_sleep_seconds} to flip the image back')
+                await asyncio.sleep(flip_back_sleep_seconds)
                 print('Flipping the channel icon back')
                 await self.flip_channel_icon()
             except Exception as e:
