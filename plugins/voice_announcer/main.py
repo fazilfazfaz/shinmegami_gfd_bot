@@ -37,21 +37,29 @@ class VoiceAnnouncer(BasePlugin):
             if len(after.channel.members) == 1:
                 self.vc_participants[after.channel.id] = dict()
                 for channel in self.vc_announce_channels:
-                    await channel.send(f'<@{member.id}> has started a VC', mention_author=False)
+                    await channel.send(
+                        f'<@{member.id}> has started a VC on <#{after.channel.id}>',
+                        allowed_mentions=discord.AllowedMentions(users=False)
+                    )
             participant = VcParticipant(member.id, int(time.time()))
             self.vc_participants[after.channel.id][member.id] = participant
         elif before.channel is not None and after.channel is None:
             vc_participants = self.vc_participants[before.channel.id]
             vc_participants[member.id].set_end_time(int(time.time()))
             if len(before.channel.members) == 0:
-                participants = []
-                for member_id in vc_participants:
-                    participation_seconds = vc_participants[member_id].end_time - vc_participants[member_id].start_time
-                    participation_time = str(datetime.timedelta(seconds=participation_seconds))
-                    participants.append(f'* <@{member_id}> {participation_time}')
-                participants_list_txt = "\n".join(participants)
-                message = f'VC has ended :(\nThanks to all the participants!\n{participants_list_txt}'
+                msg_prefix = f'VC on <#{before.channel.id}> has ended :('
+                if len(self.vc_participants) > 1:
+                    participants = []
+                    for member_id in vc_participants:
+                        vc_participant = vc_participants[member_id]
+                        participation_seconds = vc_participant.end_time - vc_participant.start_time
+                        participation_time = str(datetime.timedelta(seconds=participation_seconds))
+                        participants.append(f'* <@{member_id}> {participation_time}')
+                    participants_list_txt = "\n".join(participants)
+                    message = f'{msg_prefix}\nThanks to all the participants!\n{participants_list_txt}'
+                else:
+                    message = f'{msg_prefix}\nThat was a lonely one, sorry <@{member.id}>'
                 del self.vc_participants[before.channel.id]
                 for channel in self.vc_announce_channels:
-                    await channel.send(message, mention_author=False)
+                    await channel.send(message, allowed_mentions=discord.AllowedMentions(users=False))
                 return
