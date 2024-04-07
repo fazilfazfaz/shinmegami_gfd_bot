@@ -68,7 +68,7 @@ class VoiceAnnouncer(BasePlugin):
             vc_participants[member.id].time_slices[-1].set_end_time(current_epoch)
             if len(before.channel.members) == 0:
                 msg_prefix = f'VC{on_channel_text} has ended :('
-                if len(vc_participants) > 0:
+                if len(vc_participants) > 1:
                     participants = []
                     for member_id in vc_participants:
                         vc_participant = vc_participants[member_id]
