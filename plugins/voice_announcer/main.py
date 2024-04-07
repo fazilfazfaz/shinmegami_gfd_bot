@@ -83,8 +83,7 @@ class VoiceAnnouncer(BasePlugin):
                     message = f'{msg_prefix}\nThanks to all the participants!\n{participants_list_txt}'
                 else:
                     message = f'{msg_prefix}\nThat was a lonely one, sorry <@{member.id}>'
-                del vc_participants
-                del self.vc_participants[channel_id]
+                self.vc_participants[channel_id] = dict()
                 for channel in self.vc_announce_channels:
                     await channel.send(message, allowed_mentions=discord.AllowedMentions(users=False))
                 return
