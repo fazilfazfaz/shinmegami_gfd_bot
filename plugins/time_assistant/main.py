@@ -21,6 +21,7 @@ class TimeAssistant(BasePlugin):
     time_assist_channels = []
     pattern = re.compile(r'(^| )at (.*?) my time', re.IGNORECASE)
     pattern_with_mention = re.compile(r'(^| )at (.*?) <@\d+> time', re.IGNORECASE)
+    pattern_with_tz = re.compile(r'(^| )at (.*?) ([A-Za-z]+) time', re.IGNORECASE)
     timezone_aliases: dict[str, TimeZoneAlias] = {
         'Universal Herman Time': TimeZoneAlias('Universal Herman Time', 'UHT', 'America/New_York'),
         'Universal Cheese Time': TimeZoneAlias('Universal Cheese Time', 'UCT', 'Europe/Paris'),
@@ -49,6 +50,10 @@ class TimeAssistant(BasePlugin):
             m = self.pattern_with_mention.search(message.content)
             if m is not None:
                 await self.respond_with_utc_time_for_other_user(message, m.group(2))
+                return
+            m = self.pattern_with_tz.search(message.content)
+            if m is not None:
+                await self.respond_with_utc_time_for_tz(message, m.group(2), m.group(3))
 
     async def config_timezone_for_user(self, author: discord.User, message: discord.Message):
         timezone_string = message.content[4:]
@@ -79,8 +84,9 @@ class TimeAssistant(BasePlugin):
     @classmethod
     def parse_timezone(cls, timezone_string):
         try:
-            if timezone_string in cls.timezone_aliases:
-                return pytz.timezone(cls.timezone_aliases[timezone_string].alias_name)
+            for alias_name, alias in cls.timezone_aliases.items():
+                if alias.alias_name == timezone_string or alias.alias_shorthand == timezone_string:
+                    return pytz.timezone(alias.tz)
             timezone = pytz.timezone(timezone_string)
             return timezone
         except pytz.UnknownTimeZoneError:
@@ -114,18 +120,33 @@ class TimeAssistant(BasePlugin):
         if dt is not None:
             await message.reply(f'That\'s <t:{int(dt.timestamp())}:F>', mention_author=False)
 
-    @classmethod
-    async def respond_with_utc_time_for_other_user(cls, message: discord.Message, time_string):
+    async def respond_with_utc_time_for_other_user(self, message: discord.Message, time_string):
+        if message.mentions[0].id == self.client.user.id:
+            # they're asking for herm time
+            await self.parse_time_and_reply_to_message(
+                message,
+                self.timezone_aliases['Universal Herman Time'].tz,
+                time_string,
+            )
+            return
         gfd_database_helper.replenish_db()
         user = User.get_by_author(message.mentions[0])
         gfd_database_helper.release_db()
         if user.timezone is None:
-            await cls.respond_to_message_with_tz_unknown_other_user_tip(message)
+            await self.respond_to_message_with_tz_unknown_other_user_tip(message)
             return
         resolved_timezone = user.timezone
-        if user.timezone in cls.timezone_aliases:
-            resolved_timezone = cls.timezone_aliases[user.timezone].tz
-        await cls.parse_time_and_reply_to_message(message, resolved_timezone, time_string)
+        if user.timezone in self.timezone_aliases:
+            resolved_timezone = self.timezone_aliases[user.timezone].tz
+        await self.parse_time_and_reply_to_message(message, resolved_timezone, time_string)
+
+    @classmethod
+    async def respond_with_utc_time_for_tz(cls, message: discord.Message, time_string, time_zone_string):
+        time_zone = cls.parse_timezone(time_zone_string)
+        if time_zone is None:
+            await message.reply('I don\'t know this timezone')
+            return
+        await cls.parse_time_and_reply_to_message(message, time_zone.zone, time_string)
 
     @classmethod
     def get_timezone_suggestions(cls, timezone_string: str):
