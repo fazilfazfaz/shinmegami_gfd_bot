@@ -144,7 +144,6 @@ class TimeAssistant(BasePlugin):
     async def respond_with_utc_time_for_tz(cls, message: discord.Message, time_string, time_zone_string):
         time_zone = cls.parse_timezone(time_zone_string)
         if time_zone is None:
-            await message.reply('I don\'t know this timezone')
             return
         await cls.parse_time_and_reply_to_message(message, time_zone.zone, time_string)
 
