@@ -1,10 +1,13 @@
+import discord
+
+
 class BasePlugin:
     started = False
     client = None
     config = None
 
     def __init__(self, client, config):
-        self.client = client
+        self.client: discord.Client = client
         self.config = config
 
     def is_ready(self):

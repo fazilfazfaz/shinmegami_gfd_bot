@@ -1,4 +1,12 @@
-from database.models import User, db, AnnouncedYoutubeVideo, DuckAttemptLog, db_links, PostedLink
+import logging
+
+import database.models
+import logger
+
+if logger.is_dev:
+    pewee_logger = logging.getLogger('peewee')
+    pewee_logger.addHandler(logging.StreamHandler())
+    pewee_logger.setLevel(logging.DEBUG)
 
 
 class BaseDatabaseHelper:
@@ -18,12 +26,17 @@ class BaseDatabaseHelper:
         self.db_conn.close()
 
 
-gfd_database_helper = BaseDatabaseHelper(db, [
-    User,
-    AnnouncedYoutubeVideo,
-    DuckAttemptLog
+gfd_database_helper = BaseDatabaseHelper(database.models.db, [
+    database.models.User,
+    database.models.AnnouncedYoutubeVideo,
+    database.models.DuckAttemptLog,
+    database.models.BannedBannerMessage,
 ])
 
-gfd_links_database_helper = BaseDatabaseHelper(db_links, [
-    PostedLink
+gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links, [
+    database.models.PostedLink
+])
+
+gfd_emojis_database_helper = BaseDatabaseHelper(database.models.db_emojis, [
+    database.models.UserReaction,
 ])

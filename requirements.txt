@@ -5,3 +5,4 @@ pytz==2023.3
 dateparser==1.1.8
 jsonschema==4.21.1
 Pillow==10.3.0
+discord.py==2.4.0

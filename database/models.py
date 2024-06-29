@@ -2,6 +2,7 @@ from peewee import *
 
 db = SqliteDatabase('gfd.db')
 db_links = SqliteDatabase('gfd_links.db')
+db_emojis = SqliteDatabase('gfd_emojis.db')
 
 
 class BaseModel(Model):
@@ -106,12 +107,21 @@ class PostedLink(Model):
         return PostedLink.create(link=link)
 
 
-class BannedBannerMessage(Model):
-    class Meta:
-        database = db
-
+class BannedBannerMessage(BaseModel):
     message_id = BigIntegerField(primary_key=True)
 
     @staticmethod
     def get_by_message_id(message_id):
         return BannedBannerMessage.get_or_none(BannedBannerMessage.message_id == message_id)
+
+
+class UserReaction(Model):
+    class Meta:
+        database = db_emojis
+
+    id = BigAutoField(primary_key=True)
+    source_user_id = BigIntegerField(null=False)
+    target_user_id = BigIntegerField(null=False)
+    emoji_id = BigIntegerField(null=True, default=None)
+    emoji_str = TextField(null=True, default=None)
+    is_add = BooleanField(default=True, null=False)
