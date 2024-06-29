@@ -26,7 +26,7 @@ class ReactionTracker(BasePlugin):
     async def run(self):
         while True:
             try:
-                await asyncio.sleep(5)
+                await asyncio.sleep(30)
                 copy = self.payloads.copy()
                 self.payloads = []
                 if len(copy) > 0:
