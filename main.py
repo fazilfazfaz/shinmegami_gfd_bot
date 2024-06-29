@@ -7,6 +7,7 @@ from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
 from plugins.icon_flipper.main import IconFlipper
+from plugins.reaction_tracker.main import ReactionTracker
 from plugins.repost_watcher.main import RepostWatcher
 from plugins.smoothie_maker.main import SmoothieMaker
 from plugins.time_assistant.main import TimeAssistant
@@ -43,6 +44,7 @@ user_message_responder = UserMessageResponder(client, config)
 voice_announcer = VoiceAnnouncer(client, config)
 banner_randomizer = BannerRandomizer(client, config)
 icon_flipper = IconFlipper(client, config)
+reaction_tracker = ReactionTracker(client, config)
 
 
 @client.event
@@ -57,6 +59,7 @@ async def on_ready():
     voice_announcer.on_ready()
     banner_randomizer.on_ready()
     icon_flipper.on_ready()
+    reaction_tracker.on_ready()
 
 
 @client.event
@@ -71,11 +74,22 @@ async def on_message(message):
     await repost_watcher.on_message(message)
     await user_message_responder.on_message(message)
     await banner_randomizer.on_message(message)
+    await reaction_tracker.on_message(message)
 
 
 @client.event
 async def on_voice_state_update(member, before, after):
     await voice_announcer.voice_status_update(member, before, after)
+
+
+@client.event
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    await reaction_tracker.track_reaction(payload)
+
+
+@client.event
+async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
+    await reaction_tracker.track_reaction(payload)
 
 
 client.run(TOKEN)
