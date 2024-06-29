@@ -106,6 +106,7 @@ class ReactionTracker(BasePlugin):
                 )
             if len(user_specific_message_parts) != 0:
                 user_specific_message_parts.insert(0, f'Stats for **{user.display_name}**:')
+                user_specific_message_parts.append('')
                 message_parts += user_specific_message_parts
         if len(message_parts) == 0:
             await message.reply('I don\'t have any data')
