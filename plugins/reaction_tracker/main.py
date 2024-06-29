@@ -38,18 +38,23 @@ class ReactionTracker(BasePlugin):
     async def post_emoji_stats(message: discord.Message):
         gfd_emojis_database_helper.replenish_db()
         res: sqlite3.Cursor = db_emojis.execute_sql(
-            'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE 0 END) FROM userreaction '
+            'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) FROM userreaction '
             'GROUP BY COALESCE(emoji_id, emoji_str)'
         )
         rows = res.fetchall()
         message_parts = []
         for row in rows:
+            if row[2] < 1:
+                continue
             if row[0]:
                 emoji_str = f'<:test:{row[0]}>'
             else:
                 emoji_str = row[1]
             message_parts.append(f'{emoji_str}: {row[2]}')
-        await message.reply("\n".join(message_parts))
+        if len(message_parts) == 0:
+            await message.reply('I haven\'t tracked anything yet')
+        else:
+            await message.reply("\n".join(message_parts))
         gfd_emojis_database_helper.release_db()
 
     @staticmethod
@@ -125,6 +130,8 @@ class ReactionTracker(BasePlugin):
                 message = await channel.fetch_message(payload.message_id)
                 target_user_id = message.author.id
             else:
+                continue
+            if payload.user_id == target_user_id:
                 continue
             if payload.emoji.is_custom_emoji():
                 emoji_id = payload.emoji.id
