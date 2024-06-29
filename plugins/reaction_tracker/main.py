@@ -107,9 +107,11 @@ class ReactionTracker(BasePlugin):
         for payload in payloads:
             if payload.user_id == self.client.user.id:
                 continue
+            is_add = True
             if payload.event_type == 'REACTION_ADD':
                 target_user_id = payload.message_author_id
             elif payload.event_type == 'REACTION_REMOVE':
+                is_add = False
                 channel = await self.client.guilds[0].fetch_channel(payload.channel_id)
                 message = await channel.fetch_message(payload.message_id)
                 target_user_id = message.author.id
@@ -126,6 +128,6 @@ class ReactionTracker(BasePlugin):
                 target_user_id=target_user_id,
                 emoji_id=emoji_id,
                 emoji_str=emoji_str,
-                is_add=True
+                is_add=is_add
             )
         gfd_emojis_database_helper.release_db()
