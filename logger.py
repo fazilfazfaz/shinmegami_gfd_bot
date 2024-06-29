@@ -6,7 +6,7 @@ from dotenv import dotenv_values
 is_dev = False
 if os.path.exists('.env'):
     config = dotenv_values('.env')
-    is_dev = config['DEV_MODE'] == 'true'
+    is_dev = 'DEV_MODE' in config and config['DEV_MODE'] == 'true'
 
 logger = logging.getLogger('GFD_Bot')
 handler = logging.StreamHandler()
