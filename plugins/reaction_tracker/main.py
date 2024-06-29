@@ -112,6 +112,8 @@ class ReactionTracker(BasePlugin):
         gfd_emojis_database_helper.release_db()
 
     async def track_reaction(self, payload: discord.RawReactionActionEvent):
+        if payload.user_id == self.client.user.id:
+            return
         self.payloads.append(payload)
         logger.info('Tracked reaction')
 
@@ -119,8 +121,6 @@ class ReactionTracker(BasePlugin):
         gfd_emojis_database_helper.replenish_db()
         logger.info('Saving tracked reactions')
         for payload in payloads:
-            if payload.user_id == self.client.user.id:
-                continue
             is_add = True
             if payload.event_type == 'REACTION_ADD':
                 target_user_id = payload.message_author_id
