@@ -53,19 +53,34 @@ class ReactionTracker(BasePlugin):
         gfd_emojis_database_helper.release_db()
 
     @staticmethod
+    def _add_to_user_specific_message_parts(emojis, user_specific_message_parts, header):
+        message_parts = []
+        for emoji in emojis:
+            if emoji[2] < 1:
+                continue
+            if emoji[0]:
+                emoji_str = f'<:test:{emoji[0]}>'
+            else:
+                emoji_str = emoji[1]
+            message_parts.append(f'{emoji_str}\t{emoji[2]}')
+        if len(message_parts) != 0:
+            message_parts.insert(0, header)
+            user_specific_message_parts += message_parts
+
+    @staticmethod
     async def post_emoji_stats_for_users(message: discord.Message):
         gfd_emojis_database_helper.replenish_db()
         message_parts = []
         for user in message.mentions:
             res: sqlite3.Cursor = db_emojis.execute_sql(
-                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE 0 END) FROM userreaction '
+                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) FROM userreaction '
                 'WHERE target_user_id = ?'
                 'GROUP BY COALESCE(emoji_id, emoji_str)',
                 (user.id,)
             )
             emojis_received = res.fetchall()
             res: sqlite3.Cursor = db_emojis.execute_sql(
-                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE 0 END) FROM userreaction '
+                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) FROM userreaction '
                 'WHERE source_user_id = ?'
                 'GROUP BY COALESCE(emoji_id, emoji_str)',
                 (user.id,)
@@ -73,24 +88,18 @@ class ReactionTracker(BasePlugin):
             emojis_given = res.fetchall()
             user_specific_message_parts = []
             if len(emojis_received) > 0:
-                user_specific_message_parts.append('*Emojis received:*')
-                for emoji_received in emojis_received:
-                    if emoji_received[0]:
-                        emoji_str = f'<:test:{emoji_received[0]}>'
-                    else:
-                        emoji_str = emoji_received[1]
-                    user_specific_message_parts.append(f'{emoji_str}\t{emoji_received[2]}')
+                ReactionTracker._add_to_user_specific_message_parts(
+                    emojis_received,
+                    user_specific_message_parts,
+                    '*Reactions received*',
+                )
             if len(emojis_given) > 0:
-                user_specific_message_parts.append('*Emojis given:*')
-                for emoji_given in emojis_given:
-                    if emoji_given[0]:
-                        emoji_str = f'<:test:{emoji_given[0]}>'
-                    else:
-                        emoji_str = emoji_given[1]
-                    user_specific_message_parts.append(f'{emoji_str}\t{emoji_given[2]}')
-            if len(user_specific_message_parts) > 0:
-                user_specific_message_parts.insert(0, f'Stats for **{user.display_name}**:')
-                message_parts += user_specific_message_parts
+                ReactionTracker._add_to_user_specific_message_parts(
+                    emojis_given,
+                    user_specific_message_parts,
+                    '*Reactions given*',
+                )
+            message_parts += user_specific_message_parts
         if len(message_parts) == 0:
             await message.reply('I don\'t have any data')
         else:
