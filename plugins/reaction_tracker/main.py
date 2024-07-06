@@ -38,8 +38,9 @@ class ReactionTracker(BasePlugin):
     async def post_emoji_stats(message: discord.Message):
         gfd_emojis_database_helper.replenish_db()
         res: sqlite3.Cursor = db_emojis.execute_sql(
-            'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) FROM userreaction '
-            'GROUP BY COALESCE(emoji_id, emoji_str)'
+            'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) AS count FROM userreaction\n'
+            'GROUP BY COALESCE(emoji_id, emoji_str)\n'
+            'ORDER BY count DESC'
         )
         rows = res.fetchall()
         message_parts = []
@@ -78,16 +79,18 @@ class ReactionTracker(BasePlugin):
         message_parts = []
         for user in message.mentions:
             res: sqlite3.Cursor = db_emojis.execute_sql(
-                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) FROM userreaction '
-                'WHERE target_user_id = ?'
-                'GROUP BY COALESCE(emoji_id, emoji_str)',
+                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) AS count FROM userreaction\n'
+                'WHERE target_user_id = ?\n'
+                'GROUP BY COALESCE(emoji_id, emoji_str)\n'
+                'ORDER BY count desc',
                 (user.id,)
             )
             emojis_received = res.fetchall()
             res: sqlite3.Cursor = db_emojis.execute_sql(
-                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) FROM userreaction '
-                'WHERE source_user_id = ?'
-                'GROUP BY COALESCE(emoji_id, emoji_str)',
+                'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) AS count FROM userreaction\n'
+                'WHERE source_user_id = ?\n'
+                'GROUP BY COALESCE(emoji_id, emoji_str)\n'
+                'ORDER BY count desc',
                 (user.id,)
             )
             emojis_given = res.fetchall()
