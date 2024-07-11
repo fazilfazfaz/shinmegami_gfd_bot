@@ -66,6 +66,9 @@ async def on_ready():
 async def on_message(message):
     if message.author.id == client.user.id:
         return
+    if message.channel.id == message.author.dm_channel.id:
+        await reaction_tracker.on_message(message)
+        return
     await smoothie_maker.on_message(message)
     await comment_hearter.on_message(message)
     await duckhunt_game.on_message(message)

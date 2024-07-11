@@ -20,6 +20,8 @@ class ReactionTracker(BasePlugin):
     async def on_message(self, message: discord.Message):
         if message.content.lower() == '.emojis':
             await self.post_emoji_stats(message)
+        if message.content.lower() == '.emojis-users':
+            await self.post_emoji_users(message)
         elif message.content.lower().startswith('.emojis') and len(message.mentions) > 0:
             await self.post_emoji_stats_for_users(message)
 
@@ -59,8 +61,41 @@ class ReactionTracker(BasePlugin):
         gfd_emojis_database_helper.release_db()
 
     @staticmethod
-    def _add_to_user_specific_message_parts(emojis, user_specific_message_parts, header):
+    async def post_emoji_users(message: discord.Message):
+        gfd_emojis_database_helper.replenish_db()
         message_parts = []
+        res: sqlite3.Cursor = db_emojis.execute_sql(
+            'SELECT target_user_id, SUM(CASE WHEN is_add THEN 1 ELSE -1 END) AS count FROM userreaction\n'
+            'GROUP BY target_user_id\n'
+            'HAVING count > 0\n'
+            'ORDER BY count DESC\n'
+        )
+        rows = res.fetchall()
+        if len(rows):
+            message_parts.append(f'**Receivers:**')
+            for row in rows:
+                message_parts.append(f'<@{row[0]}>: {row[1]}')
+        res: sqlite3.Cursor = db_emojis.execute_sql(
+            'SELECT source_user_id, SUM(CASE WHEN is_add THEN 1 ELSE -1 END) AS count FROM userreaction\n'
+            'GROUP BY source_user_id\n'
+            'HAVING count > 0\n'
+            'ORDER BY count DESC\n'
+        )
+        rows = res.fetchall()
+        if len(rows):
+            message_parts.append(f'**Givers:**')
+            for row in rows:
+                message_parts.append(f'<@{row[0]}>: {row[1]}')
+        if len(message_parts) == 0:
+            await message.reply('I haven\'t tracked anything yet')
+        else:
+            await message.reply("\n".join(message_parts), allowed_mentions=discord.AllowedMentions(users=False))
+        gfd_emojis_database_helper.release_db()
+
+    @staticmethod
+    def _add_to_user_specific_message_parts(emojis, user_specific_message_parts, header) -> int:
+        message_parts = []
+        total = 0
         for emoji in emojis:
             if emoji[2] < 1:
                 continue
@@ -69,9 +104,11 @@ class ReactionTracker(BasePlugin):
             else:
                 emoji_str = emoji[1]
             message_parts.append(f'{emoji_str}\t{emoji[2]}')
+            total += emoji[2]
         if len(message_parts) != 0:
             message_parts.insert(0, header)
             user_specific_message_parts += message_parts
+        return total
 
     @staticmethod
     async def post_emoji_stats_for_users(message: discord.Message):
@@ -95,20 +132,23 @@ class ReactionTracker(BasePlugin):
             )
             emojis_given = res.fetchall()
             user_specific_message_parts = []
+            received_total = 0
+            given_total = 0
             if len(emojis_received) > 0:
-                ReactionTracker._add_to_user_specific_message_parts(
+                received_total = ReactionTracker._add_to_user_specific_message_parts(
                     emojis_received,
                     user_specific_message_parts,
                     '*Reactions received*',
                 )
             if len(emojis_given) > 0:
-                ReactionTracker._add_to_user_specific_message_parts(
+                given_total = ReactionTracker._add_to_user_specific_message_parts(
                     emojis_given,
                     user_specific_message_parts,
                     '*Reactions given*',
                 )
             if len(user_specific_message_parts) != 0:
                 user_specific_message_parts.insert(0, f'Stats for **{user.display_name}**:')
+                user_specific_message_parts.insert(1, f'Total given: **{given_total}**, received: **{received_total}**')
                 user_specific_message_parts.append('')
                 message_parts += user_specific_message_parts
         if len(message_parts) == 0:
