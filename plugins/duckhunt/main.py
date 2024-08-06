@@ -20,6 +20,8 @@ class DuckHuntGame(BasePlugin):
     last_duck_spawn_time = 0
     last_duck_message = None
     current_miss_count = {}
+    message_counter = 0
+    min_message_count = -1
 
     duck_stat_commands = ['.duckstats', '.dickstats', '.duckstat']
     duck_befriend_commands = ['.bef', '.befriend', '!bef', '🍕']
@@ -43,17 +45,24 @@ class DuckHuntGame(BasePlugin):
     kill_miss_messages = ["WHOOSH! You missed the duck completely!", "Your gun jammed!", "Better luck next time.",
                           "WTF!? Who are you Dick Cheney?"]
 
-    def on_ready(self):
-        if self.is_ready():
-            return
+    def __init__(self, client, config):
+        super().__init__(client, config)
+        if 'DUCK_REL_MSG_COUNT' not in self.config or 'DUCK_CHANNELS' not in self.config:
+            raise Exception('DUCK_REL_MSG_COUNT env var not set')
         self.all_duck_commands = set(
             self.duck_stat_commands + self.duck_befriend_commands + self.duck_kill_commands + self.duck_shoo_commands
         )
         self.all_duck_commands.add('.fam')
         self.all_duck_commands.add('.graves')
+        self.min_message_count = int(self.config['DUCK_REL_MSG_COUNT'])
+        self.channels_to_release_in = self.config['DUCK_CHANNELS'].split(',')
 
-        if 'DUCK_CHANNELS' in self.config:
-            asyncio.get_event_loop().create_task(self.duck_spawner())
+    def on_ready(self):
+        if self.is_ready():
+            return
+
+        # if 'DUCK_CHANNELS' in self.config:
+        #     asyncio.get_event_loop().create_task(self.duck_spawner())
 
     async def on_message(self, message):
         lower_case_message = message.content.lower()
@@ -83,6 +92,15 @@ class DuckHuntGame(BasePlugin):
                 elif self.should_miss_attempt(user):
                     return await self.post_duck_miss_message(user, message, 'shoo')
                 await self.shoo_duck_for_user(user, message)
+            return
+        if str(message.channel.id) not in self.channels_to_release_in:
+            return
+        self.message_counter += 1
+        if self.message_counter >= self.min_message_count:
+            self.message_counter = 0
+            if self.current_duck_channel is not None:
+                await self.last_duck_message.delete()
+            await self.release_a_duck()
 
     async def duck_spawner(self):
         while True:
@@ -232,8 +250,7 @@ class DuckHuntGame(BasePlugin):
             await message.reply("There is no duck. What are you shooting at?")
 
     async def release_a_duck(self):
-        channels_to_release_in = self.config['DUCK_CHANNELS'].split(',')
-        channel_selected = random.choice(channels_to_release_in)
+        channel_selected = random.choice(self.channels_to_release_in)
         channel = None
         for channel in self.client.guilds[0].channels:
             if str(channel.id) == channel_selected:
