@@ -43,7 +43,8 @@ class ReactionTracker(BasePlugin):
         res: sqlite3.Cursor = db_emojis.execute_sql(
             'SELECT emoji_id,emoji_str,SUM(CASE WHEN is_add THEN 1 ELSE -1 END) AS count FROM userreaction\n'
             'GROUP BY COALESCE(emoji_id, emoji_str)\n'
-            'ORDER BY count DESC'
+            'ORDER BY count DESC\n'
+            'LIMIT 10'
         )
         rows = res.fetchall()
         message_parts = []
@@ -58,12 +59,9 @@ class ReactionTracker(BasePlugin):
         if len(message_parts) == 0:
             await message.reply('I haven\'t tracked anything yet')
         else:
-            page = 1
             chunk: list
             for chunk in chunks(message_parts, 30):
-                chunk.insert(0, f'**Page {page}**:')
                 await message.reply("\n".join(chunk))
-                page += 1
         gfd_emojis_database_helper.release_db()
 
     @staticmethod
