@@ -1,12 +1,13 @@
 import datetime
 import re
+import sqlite3
 
 import dateparser
 import discord
 import pytz
 
 from database.helper import gfd_database_helper
-from database.models import User
+from database.models import User, db
 from plugins.base import BasePlugin
 
 
@@ -42,6 +43,8 @@ class TimeAssistant(BasePlugin):
             await self.show_timezone_for_user(message.author, message)
         elif message.content.startswith('.tz '):
             await self.config_timezone_for_user(message.author, message)
+        elif message.content == '.clock':
+            await self.print_users_clocks(message)
         else:
             m = self.pattern.search(message.content)
             if m is not None:
@@ -169,3 +172,31 @@ class TimeAssistant(BasePlugin):
         user.save()
         gfd_database_helper.release_db()
         await source_message.reply(f'Your timezone has been set to {timezone_string} 🕗')
+
+    @classmethod
+    async def print_users_clocks(cls, message: discord.Message):
+        gfd_database_helper.replenish_db()
+        res: sqlite3.Cursor = db.execute_sql(
+            'SELECT user_id,timezone FROM user\n'
+            'WHERE timezone IS NOT NULL'
+        )
+        rows = res.fetchall()
+        gfd_database_helper.release_db()
+        if len(rows) == 0:
+            await message.reply(f'Nobody has configured timezones yet 🕗')
+            return
+        message_parts = [
+            'Here\'s how the clock\'s looking for these peeps:'
+        ]
+        for row in rows:
+            timezone = row[1]
+            if timezone in cls.timezone_aliases:
+                timezone = cls.timezone_aliases[timezone].tz
+            tz = pytz.timezone(timezone)
+            now_for_user = datetime.datetime.now(tz)
+            formatted_time = now_for_user.strftime('%Y %B %d %I:%M %p')
+            message_parts.append(f'<@{row[0]}>: **{formatted_time}**')
+        message_parts.append('\n')
+        message_parts.append('Set your timezone with `.tz` to appear here')
+        message_parts.append('And remember, the clock\'s always ticking 🕗')
+        await message.reply('\n'.join(message_parts), allowed_mentions=discord.AllowedMentions(users=False))

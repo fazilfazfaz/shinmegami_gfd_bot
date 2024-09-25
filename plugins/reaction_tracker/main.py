@@ -5,6 +5,7 @@ import discord
 
 from database.helper import gfd_emojis_database_helper
 from database.models import UserReaction, db_emojis
+from helpers.lists import chunks
 from logger import logger
 from plugins.base import BasePlugin
 
@@ -57,7 +58,12 @@ class ReactionTracker(BasePlugin):
         if len(message_parts) == 0:
             await message.reply('I haven\'t tracked anything yet')
         else:
-            await message.reply("\n".join(message_parts))
+            page = 1
+            chunk: list
+            for chunk in chunks(message_parts, 30):
+                chunk.insert(0, f'**Page {page}**:')
+                await message.reply("\n".join(chunk))
+                page += 1
         gfd_emojis_database_helper.release_db()
 
     @staticmethod

@@ -4,6 +4,7 @@ import random
 import time
 from asyncio import Task
 from random import randrange
+from typing import Optional
 
 import discord
 import peewee
@@ -14,13 +15,16 @@ from plugins.base import BasePlugin
 
 
 class BannerRandomizer(BasePlugin):
-    banner_source_channel: discord.TextChannel = None
-    banner_from_epoch: int = None
-    banner_update_frequency: int = 3600
-    last_banner_message: discord.Message = None
-    banned_message_author_ids: set[int] = []
-    run_task: Task = None
-    user_last_shuffle_time: dict[int, int] = {}
+    def __init__(self, client, config):
+        super().__init__(client, config)
+        self.banner_source_channel: Optional[discord.TextChannel] = None
+        self.banner_from_epoch: Optional[int] = None
+        self.banner_update_frequency: Optional[int] = 3600
+        self.last_banner_message: Optional[discord.Message] = None
+        self.banned_message_author_ids: set[int] = set([])
+        self.run_task: Optional[Task] = None
+        self.user_last_shuffle_time: dict[int, int] = {}
+        self.banner_history: list = []
 
     def on_ready(self):
         if self.is_ready():
@@ -56,6 +60,7 @@ class BannerRandomizer(BasePlugin):
             finally:
                 gfd_database_helper.release_db()
             print("Banned banner message " + str(self.last_banner_message.id))
+            self.banner_history.pop(0)
             self.restart_runner()
             await message.reply(
                 f'Got it, banning ||{self.last_banner_message.jump_url}|| forever',
@@ -73,6 +78,10 @@ class BannerRandomizer(BasePlugin):
             await message.reply('I\'ve jazzed it up 🎲')
         elif 'banner?' in message_content_lower:
             await message.reply(f'The banner is {self.last_banner_message.jump_url}')
+        elif 'banners?' in message_content_lower:
+            message_parts = ['These are the last 5 banners:']
+            message_parts += self.banner_history
+            await message.reply('\n'.join(message_parts))
 
     async def run(self):
         epoch_from = self.banner_from_epoch
@@ -106,6 +115,8 @@ class BannerRandomizer(BasePlugin):
                         await self.client.guilds[0].edit(banner=await attachment.read())
                         banner_set = True
                         self.last_banner_message = message
+                        self.banner_history.insert(0, attachment.url)
+                        self.banner_history = self.banner_history[0:5]
                         break
                     except Exception as e:
                         print('Failed to set banner', str(e))
