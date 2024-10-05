@@ -1,7 +1,10 @@
+from urllib.parse import urlparse
+
 from peewee import *
 
 db = SqliteDatabase('gfd.db')
 db_links = SqliteDatabase('gfd_links.db')
+db_links_v2 = SqliteDatabase('gfd_links_v2.db')
 db_emojis = SqliteDatabase('gfd_emojis.db')
 
 
@@ -79,6 +82,7 @@ class DuckAttemptLog(BaseModel):
         return DuckAttemptLog.create(user_id=user_id, chance=chance, random_val=random_val, missed=missed)
 
 
+# Legacy posted link
 class PostedLink(Model):
     class Meta:
         database = db_links
@@ -105,6 +109,63 @@ class PostedLink(Model):
     @staticmethod
     def create_link(link):
         return PostedLink.create(link=link)
+
+
+class PostedLinkV2(Model):
+    class Meta:
+        database = db_links_v2
+        indexes = (
+            (('link_minus_qp', 'qp'), True),
+        )
+
+    id = BigAutoField(primary_key=True)
+    link_minus_qp = TextField()
+    qp = TextField()
+    hits = IntegerField(default=0)
+
+    def increment_hits(self):
+        self.hits += 1
+
+    @staticmethod
+    def get_hits_times_text(hits):
+        times = 'times' if hits > 1 else 'time'
+        return f'{hits} {times}'
+
+    @staticmethod
+    def get_hits_by_link(link):
+        link_minus_qp, qp = PostedLinkV2.parse_link(link)
+        link: PostedLinkV2 = PostedLinkV2.get_or_none(PostedLinkV2.link_minus_qp == link_minus_qp,
+                                                      PostedLinkV2.qp == qp)
+        if link is not None:
+            return link.hits
+        count = PostedLinkV2.select().where(PostedLinkV2.link_minus_qp == link_minus_qp).count()
+        if count > 50:
+            return 0
+        hits = 0
+        for link in PostedLinkV2.select().where(PostedLinkV2.link_minus_qp == link_minus_qp):
+            hits += link.hits
+        return hits
+
+    @staticmethod
+    def parse_link(link):
+        parsed_url = urlparse(link)
+        link_minus_qp = '{}://{}{}'.format(parsed_url.scheme, parsed_url.netloc, parsed_url.path)
+        if parsed_url.params:
+            link_minus_qp += ';{}'.format(parsed_url.params)
+        qp = parsed_url.query
+        return link_minus_qp, qp
+
+    @staticmethod
+    def get_top_links(count: int):
+        return PostedLinkV2.select().order_by(PostedLinkV2.hits.desc()).limit(count)
+
+    @staticmethod
+    def create_link(link, hits=1):
+        link_minus_qp, qp = PostedLinkV2.parse_link(link)
+        return PostedLinkV2.create(link_minus_qp=link_minus_qp, qp=qp, hits=hits)
+
+    def full_link(self):
+        return self.link_minus_qp + '?' + self.qp
 
 
 class BannedBannerMessage(BaseModel):

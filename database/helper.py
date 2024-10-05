@@ -33,8 +33,8 @@ gfd_database_helper = BaseDatabaseHelper(database.models.db, [
     database.models.BannedBannerMessage,
 ])
 
-gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links, [
-    database.models.PostedLink
+gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links_v2, [
+    database.models.PostedLinkV2
 ])
 
 gfd_emojis_database_helper = BaseDatabaseHelper(database.models.db_emojis, [
