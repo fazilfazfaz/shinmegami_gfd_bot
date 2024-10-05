@@ -25,7 +25,7 @@ class RepostWatcher(BasePlugin):
             actual_link = self.clean_link(actual_link)
             hits = PostedLinkV2.get_hits_by_link(actual_link)
             posted_link = await self.process_link(actual_link)
-            if reacted is False and hits > 1:
+            if reacted is False and hits > 0:
                 reacted = True
                 await message.add_reaction('♻')
 
