@@ -21,6 +21,8 @@ class BannerRandomizer(BasePlugin):
         self.banner_from_epoch: Optional[int] = None
         self.banner_update_frequency: Optional[int] = 3600
         self.last_banner_message: Optional[discord.Message] = None
+        self.last_banned_message: Optional[discord.Message] = None
+        self.last_ban_time: Optional[int] = None
         self.banned_message_author_ids: set[int] = set([])
         self.run_task: Optional[Task] = None
         self.user_last_shuffle_time: dict[int, int] = {}
@@ -59,6 +61,8 @@ class BannerRandomizer(BasePlugin):
                 return
             finally:
                 gfd_database_helper.release_db()
+            self.last_banned_message = self.last_banner_message
+            self.last_ban_time = time.time()
             print("Banned banner message " + str(self.last_banner_message.id))
             self.banner_history.pop(0)
             self.restart_runner()
@@ -66,6 +70,20 @@ class BannerRandomizer(BasePlugin):
                 f'Got it, banning ||{self.last_banner_message.jump_url}|| forever',
                 suppress_embeds=True
             )
+        elif message_content_lower == '.unbanner':
+            if self.last_banned_message is None or time.time() - self.last_ban_time > 120:
+                await message.reply('I barely knew her!')
+                return
+            gfd_database_helper.replenish_db()
+            try:
+                BannedBannerMessage.delete() \
+                    .where(BannedBannerMessage.message_id == self.last_banned_message.id) \
+                    .execute()
+                await message.reply(f"{self.last_banned_message.jump_url} has been unbanned")
+                self.last_ban_time = None
+                self.last_banned_message = None
+            finally:
+                gfd_database_helper.release_db()
         elif message_content_lower == '.shuffle':
             current_timestamp = int(time.time())
             author_id = message.author.id
