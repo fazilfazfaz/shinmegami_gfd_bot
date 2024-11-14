@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 import os
 import random
 from typing import Optional
@@ -89,9 +90,16 @@ class WhosThatMonster(BasePlugin):
         return discord.File(self.get_image_bytes(im2), self.filename)
 
     async def post_monster(self):
+        file = self.get_hidden_monster()
+        message_parts = [
+            'Who\'s that monster??',
+        ]
+        clues = self.get_clues()
+        if clues:
+            message_parts.append(f'Clues: {clues}')
         await self.channel.send(
-            file=self.get_hidden_monster(),
-            content='Who\'s that monster??'
+            file=file,
+            content="\n".join(message_parts)
         )
 
     async def reveal_monster(self):
@@ -109,4 +117,15 @@ class WhosThatMonster(BasePlugin):
         users = User.select().order_by(User.monsters_guessed.desc())
         for user in users:
             message_lines.append(f'<@{user.user_id}>: {user.monsters_guessed}')
-        await self.channel.send(content="\n".join(message_lines))
+        await self.channel.send(content="\n".join(message_lines), allowed_mentions=discord.AllowedMentions(users=False))
+
+    def get_clues(self):
+        if not self.current_monster:
+            return None
+        monsters_dir = self.get_monster_files_path()
+        clues_file = os.path.join(monsters_dir, 'clues.json')
+        if not os.path.exists(clues_file):
+            return None
+        with open(clues_file, 'r') as f:
+            clues = json.load(f)
+            return clues[self.current_monster] if self.current_monster in clues else None
