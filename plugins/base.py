@@ -2,11 +2,9 @@ import discord
 
 
 class BasePlugin:
-    started = False
-    client = None
-    config = None
 
     def __init__(self, client, config):
+        self.started = False
         self.client: discord.Client = client
         self.config = config
 

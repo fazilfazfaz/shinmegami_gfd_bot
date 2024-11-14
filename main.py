@@ -15,6 +15,7 @@ from plugins.twitch_announcer.main import TwitchAnnouncer
 from plugins.user_message_responder.main import UserMessageResponder
 from plugins.user_silencer.main import UserSilencer
 from plugins.voice_announcer.main import VoiceAnnouncer
+from plugins.whos_that_monster.main import WhosThatMonster
 from plugins.youtube_announcer.main import YoutubeAnnouncer
 
 if not os.path.exists('.env'):
@@ -45,6 +46,7 @@ voice_announcer = VoiceAnnouncer(client, config)
 banner_randomizer = BannerRandomizer(client, config)
 icon_flipper = IconFlipper(client, config)
 reaction_tracker = ReactionTracker(client, config)
+whos_that_monster = WhosThatMonster(client, config)
 
 
 @client.event
@@ -60,6 +62,7 @@ async def on_ready():
     banner_randomizer.on_ready()
     icon_flipper.on_ready()
     reaction_tracker.on_ready()
+    whos_that_monster.on_ready()
 
 
 @client.event
@@ -78,6 +81,7 @@ async def on_message(message):
     await user_message_responder.on_message(message)
     await banner_randomizer.on_message(message)
     await reaction_tracker.on_message(message)
+    await whos_that_monster.on_message(message)
 
 
 @client.event

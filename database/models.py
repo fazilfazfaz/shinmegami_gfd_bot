@@ -33,6 +33,7 @@ class User(BaseModel):
     ducks_killed = BigIntegerField(default=0)
     ducks_shooed = BigIntegerField(default=0)
     timezone = CharField(null=True)
+    monsters_guessed = BigIntegerField(default=0)
 
     @staticmethod
     def get_by_author(author):
