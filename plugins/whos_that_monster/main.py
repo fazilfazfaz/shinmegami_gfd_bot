@@ -37,6 +37,7 @@ class WhosThatMonster(BasePlugin):
         asyncio.get_event_loop().create_task(self.run())
 
     async def run(self):
+        await asyncio.sleep(self.delay * 60)
         while True:
             try:
                 await self.post_monster()
@@ -76,8 +77,8 @@ class WhosThatMonster(BasePlugin):
 
     def get_hidden_monster(self) -> discord.File:
         monsters_dir = self.get_monster_files_path()
-        monsters = os.listdir(monsters_dir)
-        monster = random.choice(monsters)
+        monster_files = os.listdir(monsters_dir)
+        monster = random.choice(list(filter(lambda x: x.endswith('.png'), monster_files)))
         self.current_monster = monster[0:-4]
         self.current_monster_file = monster
         logger.info(f'Monster released {self.current_monster}')
