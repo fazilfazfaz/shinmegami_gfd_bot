@@ -70,7 +70,9 @@ class WhosThatMonster(BasePlugin):
         dir_path = os.path.realpath(os.path.dirname(__file__))
         return dir_path + '/../../resources/monsters/'
 
-    def get_current_monster(self) -> discord.File:
+    def get_current_monster(self) -> Optional[discord.File]:
+        if not self.current_monster_file:
+            return
         monsters_dir = self.get_monster_files_path()
         im = Image.open(os.path.join(monsters_dir, self.current_monster_file))
         return discord.File(self.get_image_bytes(im), self.filename)
@@ -85,8 +87,8 @@ class WhosThatMonster(BasePlugin):
         im = Image.open(os.path.join(monsters_dir, monster))
         data = np.array(im)
         red, green, blue, alpha = data.T
-        white_areas = (red >= 0) & (green >= 0) & (blue >= 0)
-        data[..., :-1][white_areas.T] = (65, 65, 65)
+        filter_out_areas = (red >= 0) & (green >= 0) & (blue >= 0)
+        data[..., :-1][filter_out_areas.T] = (65, 65, 65)
         im2 = Image.fromarray(data)
         return discord.File(self.get_image_bytes(im2), self.filename)
 
