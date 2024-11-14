@@ -66,7 +66,7 @@ class WhosThatMonster(BasePlugin):
     @staticmethod
     def get_monster_files_path():
         dir_path = os.path.realpath(os.path.dirname(__file__))
-        return dir_path + '/../../resources/monsters/pokemon/'
+        return dir_path + '/../../resources/monsters/'
 
     def get_current_monster(self) -> discord.File:
         monsters_dir = self.get_monster_files_path()
