@@ -52,16 +52,16 @@ whos_that_monster = WhosThatMonster(client, config)
 @client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
-    # comment_hearter.on_ready()
-    # duckhunt_game.on_ready()
-    # user_silencer.on_ready()
-    # youtube_announcer.on_ready()
-    # twitch_announcer.on_ready()
-    # user_message_responder.on_ready()
-    # voice_announcer.on_ready()
-    # banner_randomizer.on_ready()
-    # icon_flipper.on_ready()
-    # reaction_tracker.on_ready()
+    comment_hearter.on_ready()
+    duckhunt_game.on_ready()
+    user_silencer.on_ready()
+    youtube_announcer.on_ready()
+    twitch_announcer.on_ready()
+    user_message_responder.on_ready()
+    voice_announcer.on_ready()
+    banner_randomizer.on_ready()
+    icon_flipper.on_ready()
+    reaction_tracker.on_ready()
     whos_that_monster.on_ready()
 
 
@@ -70,17 +70,17 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
     if message.author.dm_channel and message.channel.id == message.author.dm_channel.id:
-        # await reaction_tracker.on_message(message)
+        await reaction_tracker.on_message(message)
         return
-    # await smoothie_maker.on_message(message)
-    # await comment_hearter.on_message(message)
-    # await duckhunt_game.on_message(message)
-    # await user_silencer.on_message(message)
-    # await time_assistant.on_message(message)
-    # await repost_watcher.on_message(message)
-    # await user_message_responder.on_message(message)
-    # await banner_randomizer.on_message(message)
-    # await reaction_tracker.on_message(message)
+    await smoothie_maker.on_message(message)
+    await comment_hearter.on_message(message)
+    await duckhunt_game.on_message(message)
+    await user_silencer.on_message(message)
+    await time_assistant.on_message(message)
+    await repost_watcher.on_message(message)
+    await user_message_responder.on_message(message)
+    await banner_randomizer.on_message(message)
+    await reaction_tracker.on_message(message)
     await whos_that_monster.on_message(message)
 
 
