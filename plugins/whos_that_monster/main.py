@@ -110,9 +110,9 @@ class WhosThatMonster(BasePlugin):
     async def reveal_monster(self):
         if self.current_monster is None:
             return
+        await self.channel.send(content=f'It was {self.current_monster}!', file=self.get_current_monster())
         self.current_monster = None
         self.current_monster_file = None
-        await self.channel.send(content=f'It was {self.current_monster}!', file=self.get_current_monster())
 
     async def post_leaderboard(self):
         message_lines = [
