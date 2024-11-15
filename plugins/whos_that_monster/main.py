@@ -55,9 +55,9 @@ class WhosThatMonster(BasePlugin):
             user.monsters_guessed += 1
             user.save()
             gfd_database_helper.release_db()
+            await message.reply(content='Yes!', file=self.get_monster_file(self.current_monster_file))
             self.current_monster = None
             self.current_monster_file = None
-            await message.reply(content='Yes!', file=self.get_current_monster())
 
     @staticmethod
     def get_image_bytes(image: Image) -> io.BytesIO:
@@ -72,11 +72,8 @@ class WhosThatMonster(BasePlugin):
         dir_path = os.path.realpath(os.path.dirname(__file__))
         return dir_path + '/../../resources/monsters/'
 
-    def get_current_monster(self) -> Optional[discord.File]:
-        if not self.current_monster_file:
-            return
-        monsters_dir = self.get_monster_files_path()
-        im = Image.open(os.path.join(monsters_dir, self.current_monster_file))
+    def get_monster_file(self, monster_file) -> Optional[discord.File]:
+        im = Image.open(os.path.join(self.get_monster_files_path(), monster_file))
         return discord.File(self.get_image_bytes(im), self.filename)
 
     def get_hidden_monster(self) -> discord.File:
@@ -110,7 +107,10 @@ class WhosThatMonster(BasePlugin):
     async def reveal_monster(self):
         if self.current_monster is None:
             return
-        await self.channel.send(content=f'It was {self.current_monster}!', file=self.get_current_monster())
+        await self.channel.send(
+            content=f'It was {self.current_monster}!',
+            file=self.get_monster_file(self.current_monster_file)
+        )
         self.current_monster = None
         self.current_monster_file = None
 
