@@ -55,6 +55,8 @@ class WhosThatMonster(BasePlugin):
             user.monsters_guessed += 1
             user.save()
             gfd_database_helper.release_db()
+            self.current_monster = None
+            self.current_monster_file = None
             await message.reply(content='Yes!', file=self.get_current_monster())
 
     @staticmethod
