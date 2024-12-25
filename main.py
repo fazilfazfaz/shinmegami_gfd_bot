@@ -3,6 +3,7 @@ import os.path
 import discord
 from dotenv import dotenv_values
 
+from plugins.anon_messenger.main import AnonMessenger
 from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
@@ -47,6 +48,7 @@ banner_randomizer = BannerRandomizer(client, config)
 icon_flipper = IconFlipper(client, config)
 reaction_tracker = ReactionTracker(client, config)
 whos_that_monster = WhosThatMonster(client, config)
+anon_messenger = AnonMessenger(client, config)
 
 
 @client.event
@@ -66,11 +68,12 @@ async def on_ready():
 
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.author.id == client.user.id:
         return
-    if message.author.dm_channel and message.channel.id == message.author.dm_channel.id:
+    if message.channel.type == discord.ChannelType.private:
         await reaction_tracker.on_message(message)
+        await anon_messenger.on_message(message)
         return
     await smoothie_maker.on_message(message)
     await comment_hearter.on_message(message)
