@@ -71,7 +71,8 @@ async def on_ready():
 async def on_message(message: discord.Message):
     if message.author.id == client.user.id:
         return
-    if message.channel.type == discord.ChannelType.private:
+    if message.channel.type == discord.ChannelType.private \
+            and client.guilds[0].get_member(message.author.id) is not None:
         await reaction_tracker.on_message(message)
         await anon_messenger.on_message(message)
         return
