@@ -106,6 +106,7 @@ class GiftySanta(BasePlugin):
             return
         if isinstance(self.gifty_channel, discord.Thread):
             members = await self.gifty_channel.fetch_members()
+            members = list(map(lambda x: self.gifty_channel.guild.get_member(x.id), members))
         else:
             members = self.gifty_channel.members
         channel_members_without_me = list(filter(lambda x: x.id != self.client.user.id, members))
@@ -130,6 +131,7 @@ class GiftySanta(BasePlugin):
                 is_reassigned = True
                 assignment.giftee_user_id = giftee.id
                 assignment.save()
+
             channel = await member.create_dm()
             await channel.send(f'Your giftee for **{self.current_gifty_santa.name}** is **{giftee.display_name}**!')
         gfd_database_helper.release_db()
