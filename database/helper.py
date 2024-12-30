@@ -31,6 +31,8 @@ gfd_database_helper = BaseDatabaseHelper(database.models.db, [
     database.models.AnnouncedYoutubeVideo,
     database.models.DuckAttemptLog,
     database.models.BannedBannerMessage,
+    database.models.GiftySanta,
+    database.models.GiftySantaAssignment,
 ])
 
 gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links_v2, [

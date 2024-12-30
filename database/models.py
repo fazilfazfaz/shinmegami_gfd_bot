@@ -187,3 +187,27 @@ class UserReaction(Model):
     emoji_id = BigIntegerField(null=True, default=None)
     emoji_str = TextField(null=True, default=None)
     is_add = BooleanField(default=True, null=False)
+
+
+class GiftySanta(Model):
+    class Meta:
+        database = db
+
+    id = BigAutoField(primary_key=True)
+    name = TextField(null=True, default=None)
+    is_complete = BooleanField(default=False)
+
+
+class GiftySantaAssignment(Model):
+    class Meta:
+        database = db
+        indexes = (
+            (('gift_santa_id', 'santa_user_id'), True),
+        )
+
+    id = BigAutoField(primary_key=True)
+    gift_santa = ForeignKeyField(GiftySanta)
+    santa_user_id = BigIntegerField(null=False)
+    giftee_user_id = BigIntegerField(null=False)
+    gift_name = TextField(null=True, default=None)
+    is_revealed = BooleanField(default=False)

@@ -7,6 +7,7 @@ from plugins.anon_messenger.main import AnonMessenger
 from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
+from plugins.gifty_santa.main import GiftySanta
 from plugins.icon_flipper.main import IconFlipper
 from plugins.reaction_tracker.main import ReactionTracker
 from plugins.repost_watcher.main import RepostWatcher
@@ -32,6 +33,7 @@ TOKEN = config['DISCORD_TOKEN']
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
+intents.dm_messages = True
 client = discord.Client(intents=intents)
 
 comment_hearter = CommentHearter(client, config)
@@ -49,6 +51,7 @@ icon_flipper = IconFlipper(client, config)
 reaction_tracker = ReactionTracker(client, config)
 whos_that_monster = WhosThatMonster(client, config)
 anon_messenger = AnonMessenger(client, config)
+gifty_santa = GiftySanta(client, config)
 
 
 @client.event
@@ -75,7 +78,9 @@ async def on_message(message: discord.Message):
             and client.guilds[0].get_member(message.author.id) is not None:
         await reaction_tracker.on_message(message)
         await anon_messenger.on_message(message)
+        await gifty_santa.on_message(message)
         return
+    await gifty_santa.on_message(message)
     await smoothie_maker.on_message(message)
     await comment_hearter.on_message(message)
     await duckhunt_game.on_message(message)
