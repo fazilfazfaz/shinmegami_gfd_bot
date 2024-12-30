@@ -104,7 +104,11 @@ class GiftySanta(BasePlugin):
         if self.current_gifty_santa is None:
             await message.reply(self.no_gifty_message)
             return
-        channel_members_without_me = list(filter(lambda x: x.id != self.client.user.id, self.gifty_channel.members))
+        if isinstance(self.gifty_channel, discord.Thread):
+            members = await self.gifty_channel.fetch_members()
+        else:
+            members = self.gifty_channel.members
+        channel_members_without_me = list(filter(lambda x: x.id != self.client.user.id, members))
         picked = set()
         gfd_database_helper.replenish_db()
         is_reassigned = False
