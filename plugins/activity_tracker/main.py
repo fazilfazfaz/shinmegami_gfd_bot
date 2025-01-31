@@ -55,23 +55,35 @@ class ActivityTracker(BasePlugin):
         activity_game_platform = None
         if new_game_activity.platform is not None:
             activity_game_platform, created = ActivityGamePlatform.get_or_create(name=new_game_activity.platform)
-        Activity.create(
+        activity = Activity.create(
             user_id=member.id,
             activity_game_id=activity_game.id,
             activity_game_platform_id=None if activity_game_platform is None else activity_game_platform.id,
-            start_time=datetime.datetime.now()
+            start_time=new_game_activity.start.timestamp(),
         )
         gfd_database_helper.release_db()
+        return activity
 
     @staticmethod
     def close_latest_activity(member, game_activity):
         logger.info(f'Closing activity for {member.display_name} {game_activity.name}')
         gfd_database_helper.replenish_db()
         latest_activity: Activity = Activity.get_latest_by_user_id(member.id)
-        if (latest_activity is not None
+        if (
+                latest_activity is None
+                or latest_activity.activity_game.name != game_activity.name
+                or latest_activity.end_time is not None
+        ):
+            activity: Activity = ActivityTracker.create_new_activity(member, game_activity)
+            activity.end_time = datetime.datetime.now().timestamp()
+            activity.save()
+            return
+        if (
+                latest_activity is not None
                 and latest_activity.end_time is None
-                and latest_activity.activity_game.name == game_activity.name):
-            latest_activity.end_time = datetime.datetime.now()
+                and latest_activity.activity_game.name == game_activity.name
+        ):
+            latest_activity.end_time = datetime.datetime.now().timestamp()
             latest_activity.save()
         gfd_database_helper.release_db()
 
