@@ -3,6 +3,7 @@ import os.path
 import discord
 from dotenv import dotenv_values
 
+from plugins.activity_tracker.main import ActivityTracker
 from plugins.anon_messenger.main import AnonMessenger
 from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
@@ -32,6 +33,7 @@ TOKEN = config['DISCORD_TOKEN']
 
 intents = discord.Intents.default()
 intents.members = True
+intents.presences = True
 intents.message_content = True
 intents.dm_messages = True
 client = discord.Client(intents=intents)
@@ -52,6 +54,7 @@ reaction_tracker = ReactionTracker(client, config)
 whos_that_monster = WhosThatMonster(client, config)
 anon_messenger = AnonMessenger(client, config)
 gifty_santa = GiftySanta(client, config)
+activity_tracker = ActivityTracker(client, config)
 
 
 @client.event
@@ -106,6 +109,11 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
 @client.event
 async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
     await reaction_tracker.track_reaction(payload)
+
+
+@client.event
+async def on_presence_update(before, after):
+    await activity_tracker.presence_update(before, after)
 
 
 client.run(TOKEN)
