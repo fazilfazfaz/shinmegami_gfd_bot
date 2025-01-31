@@ -5,6 +5,7 @@ import discord
 
 from database.helper import gfd_database_helper
 from database.models import Activity, ActivityGame, ActivityGamePlatform
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -48,6 +49,7 @@ class ActivityTracker(BasePlugin):
 
     @staticmethod
     def create_new_activity(member, new_game_activity):
+        logger.info(f'Starting new activity for {member.display_name} {new_game_activity.name}')
         gfd_database_helper.replenish_db()
         activity_game, created = ActivityGame.get_or_create(name=new_game_activity.name)
         activity_game_platform = None
@@ -63,6 +65,7 @@ class ActivityTracker(BasePlugin):
 
     @staticmethod
     def close_latest_activity(member, game_activity):
+        logger.info(f'Closing activity for {member.display_name} {game_activity.name}')
         gfd_database_helper.replenish_db()
         latest_activity: Activity = Activity.get_latest_by_user_id(member.id)
         if (latest_activity is not None
