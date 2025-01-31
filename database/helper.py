@@ -33,6 +33,9 @@ gfd_database_helper = BaseDatabaseHelper(database.models.db, [
     database.models.BannedBannerMessage,
     database.models.GiftySanta,
     database.models.GiftySantaAssignment,
+    database.models.ActivityGame,
+    database.models.ActivityGamePlatform,
+    database.models.Activity,
 ])
 
 gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links_v2, [

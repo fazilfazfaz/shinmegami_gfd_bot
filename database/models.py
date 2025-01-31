@@ -211,3 +211,26 @@ class GiftySantaAssignment(Model):
     giftee_user_id = BigIntegerField(null=False)
     gift_name = TextField(null=True, default=None)
     is_revealed = BooleanField(default=False)
+
+
+class ActivityGame(BaseModel):
+    id = BigAutoField(primary_key=True)
+    name = TextField(null=False)
+
+
+class ActivityGamePlatform(BaseModel):
+    id = AutoField(primary_key=True)
+    name = TextField(null=False)
+
+
+class Activity(BaseModel):
+    id = BigAutoField(primary_key=True)
+    user_id = BigIntegerField(null=False)
+    activity_game = ForeignKeyField(ActivityGame, null=False)
+    activity_game_platform = ForeignKeyField(ActivityGamePlatform, null=True, default=None)
+    start_time = TimestampField(null=False)
+    end_time = TimestampField(null=True, default=None)
+
+    @staticmethod
+    def get_latest_by_user_id(user_id):
+        return Activity.select().where(Activity.user_id == user_id).order_by(Activity.id.desc()).first()
