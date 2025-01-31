@@ -2,6 +2,7 @@ import datetime
 from datetime import timedelta
 
 import discord
+from peewee import fn
 
 from database.helper import gfd_database_helper
 from database.models import Activity, ActivityGame, ActivityGamePlatform
@@ -119,23 +120,28 @@ class ActivityTracker(BasePlugin):
     def get_activities_selection_query(last_week):
         query = (
             Activity
-            .select(Activity, ActivityGame.name)
+            .select(
+                ActivityGame.name,
+                fn.SUM(Activity.end_time - Activity.start_time).alias('total_time')
+            )
             .join(ActivityGame, on=(Activity.activity_game_id == ActivityGame.id))
             .where(
                 (Activity.end_time.is_null(False))
                 & (Activity.start_time >= last_week)
                 & ((Activity.end_time - Activity.start_time) >= 60)
             )
-            .order_by((Activity.end_time - Activity.start_time).desc())
+            .group_by(Activity.activity_game_id)
+            .order_by(fn.SUM(Activity.end_time - Activity.start_time).desc())
         )
+
         return query
 
     @staticmethod
     def create_games_stats_text(results):
         stats_text = ''
         for result in results:
-            duration = result["end_time"] - result["start_time"]
-            hours, remainder = divmod(duration.seconds, 3600)
+            duration = result["total_time"]
+            hours, remainder = divmod(duration, 3600)
             minutes = remainder // 60
             stats_text += f'**{result["name"]}**: {int(hours)}h {int(minutes)}m\n'
         return stats_text
