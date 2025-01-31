@@ -22,7 +22,6 @@ class ActivityTracker(BasePlugin):
             await self.post_daily_stats(message)
 
     async def presence_update(self, before: discord.Member, after: discord.Member):
-        print(before.display_name, before.activities, after.activities)
         prior_game_activities: list[discord.Activity] = list(
             filter(lambda x: x.type == discord.ActivityType.playing, before.activities)
         )
@@ -74,6 +73,7 @@ class ActivityTracker(BasePlugin):
                 or latest_activity.activity_game.name != game_activity.name
                 or latest_activity.end_time is not None
         ):
+            logger.info(f'Creating shadow activity for {member.display_name} {game_activity.name}')
             activity: Activity = ActivityTracker.create_new_activity(member, game_activity)
             activity.end_time = datetime.datetime.now().timestamp()
             activity.save()
