@@ -94,6 +94,7 @@ async def on_message(message: discord.Message):
     await banner_randomizer.on_message(message)
     await reaction_tracker.on_message(message)
     await whos_that_monster.on_message(message)
+    await activity_tracker.on_message(message)
 
 
 @client.event
