@@ -19,8 +19,12 @@ class ActivityTracker(BasePlugin):
     async def on_message(self, message: discord.Message):
         if message.content.lower() == '.games':
             await self.post_weekly_stats(message)
+            return
         if message.content.lower() == '.games-daily':
             await self.post_daily_stats(message)
+            return
+        if message.content.startswith('.game '):
+            await self.post_per_user_stats_for_game(message)
 
     async def presence_update(self, before: discord.Member, after: discord.Member):
         prior_game_activities: list[discord.Activity] = list(
@@ -145,3 +149,51 @@ class ActivityTracker(BasePlugin):
             minutes = remainder // 60
             stats_text += f'**{result["name"]}**: {int(hours)}h {int(minutes)}m\n'
         return stats_text
+
+    @staticmethod
+    async def post_per_user_stats_for_game(message):
+        game_name = message.content[6:].strip()
+        if game_name == '':
+            await message.reply('A game name must be specified!')
+            return
+        if len(game_name) < 3:
+            await message.reply('Game name must be at least 3 characters long!')
+            return
+        query = (
+            Activity
+            .select(
+                Activity.user_id,
+                ActivityGame.name,
+                fn.SUM(Activity.end_time - Activity.start_time).alias('total_time')
+            )
+            .join(ActivityGame, on=(Activity.activity_game_id == ActivityGame.id))
+            .where(
+                (Activity.end_time.is_null(False))
+                & ((Activity.end_time - Activity.start_time) >= 60)
+                & (ActivityGame.name ** f'%{game_name}%')
+            )
+            .group_by(Activity.user_id, Activity.activity_game_id)
+            .order_by(Activity.activity_game_id, fn.SUM(Activity.end_time - Activity.start_time).desc())
+        )
+        gfd_database_helper.replenish_db()
+        results = query.dicts()
+        gfd_database_helper.release_db()
+        if len(results) == 0:
+            await message.reply(f'I did not find anything for **{game_name}**!')
+            return
+        text = ''
+        last_game = None
+        for result in results:
+            game_name = result['name']
+            user_id = result['user_id']
+            duration = result['total_time']
+            hours, remainder = divmod(duration, 3600)
+            minutes = remainder // 60
+            if last_game != game_name:
+                if last_game is not None:
+                    text += '\n'
+                last_game = game_name
+                text += f'**{game_name}**:\n'
+            text += f'<@{user_id}>: {int(hours)}h {int(minutes)}m\n'
+
+        await message.reply(text, allowed_mentions=discord.AllowedMentions(users=False))
