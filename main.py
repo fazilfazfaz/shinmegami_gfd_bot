@@ -82,6 +82,7 @@ async def on_message(message: discord.Message):
         await reaction_tracker.on_message(message)
         await anon_messenger.on_message(message)
         await gifty_santa.on_message(message)
+        await whos_that_monster.on_message(message)
         return
     await gifty_santa.on_message(message)
     await smoothie_maker.on_message(message)
