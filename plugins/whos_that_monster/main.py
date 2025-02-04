@@ -3,9 +3,11 @@ import io
 import json
 import os
 import random
+import time
 from typing import Optional
 
 import discord
+import google.generativeai as genai
 import numpy as np
 from PIL import Image
 
@@ -13,6 +15,7 @@ from database.helper import gfd_database_helper
 from database.models import User
 from logger import logger
 from plugins.base import BasePlugin
+from plugins.whos_that_monster.single_worker_pool import QueueBasedWorker
 
 
 class WhosThatMonster(BasePlugin):
@@ -22,8 +25,12 @@ class WhosThatMonster(BasePlugin):
         super().__init__(client, config)
         self.current_monster: Optional[str] = None
         self.current_monster_file: Optional[str] = None
+        self.current_monster_message: Optional[discord.Message] = None
         self.channel: Optional[discord.TextChannel] = None
         self.delay: int = 60
+        self.queue_worker: Optional[QueueBasedWorker] = QueueBasedWorker()
+        self.current_phrase_evaluations = {}
+        genai.configure(api_key=config['GEMINI_KEY'])
 
     def on_ready(self):
         if self.is_ready():
@@ -37,6 +44,7 @@ class WhosThatMonster(BasePlugin):
         asyncio.get_event_loop().create_task(self.run())
 
     async def run(self):
+        await self.queue_worker.start()
         await asyncio.sleep(self.delay * 60)
         while True:
             try:
@@ -57,7 +65,35 @@ class WhosThatMonster(BasePlugin):
             gfd_database_helper.release_db()
             await message.reply(content='Yes!', file=self.get_monster_file(self.current_monster_file))
             self.current_monster = None
+            self.current_monster_message = None
             self.current_monster_file = None
+            return
+        if message.reference is not None and message.reference.message_id == self.current_monster_message.id:
+            if self.current_monster_message is not None:
+                await self.schedule_phrase_score_check(message)
+                return
+            await message.reply('Too late!')
+
+    async def schedule_phrase_score_check(self, message):
+        author_id = message.author.id
+        if author_id in self.current_phrase_evaluations \
+                and time.time() - self.current_phrase_evaluations[author_id] < 5:
+            await message.reply('No spamming!')
+            return
+        self.current_phrase_evaluations[author_id] = time.time()
+        await message.reply('I will have to think about this...')
+        self.queue_worker.submit(self.gemini_processor, message, self.current_monster)
+
+    @staticmethod
+    async def gemini_processor(message: discord.Message, monster_name):
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        prompt = (
+            f"How apt is the caption \"{message.content}\" for the monster {monster_name} just by how it looks."
+            "Do not consider its nature, biology or other details. Just the visual makeup."
+            "Return a score out of 10 in the x/10 format only."
+        )
+        response = await model.generate_content_async(prompt)
+        await message.reply(f'This description is a **{response.text.strip()}**!')
 
     @staticmethod
     def get_image_bytes(image: Image) -> io.BytesIO:
@@ -99,7 +135,9 @@ class WhosThatMonster(BasePlugin):
         clues = self.get_clues()
         if clues:
             message_parts.append(f'Clues: {clues}')
-        await self.channel.send(
+        self.current_phrase_evaluations = {}
+        await self.queue_worker.clear()
+        self.current_monster_message = await self.channel.send(
             file=file,
             content="\n".join(message_parts)
         )
