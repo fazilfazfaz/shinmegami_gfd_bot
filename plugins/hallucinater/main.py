@@ -21,7 +21,9 @@ class Hallucinater(BasePlugin):
             await message.reply("Slow down!")
             return
         self.rate_limiter[user_id] = current_time
-        if not message.mention_everyone and self.client.user in message.mentions:
+        if not message.mention_everyone \
+                and self.client.user in message.mentions \
+                and message.reference is None:
             user_prompt = message.content.replace(f'<@{self.client.user.id}>', '').strip()
             await self.respond_to_prompt(message, user_prompt)
             return
