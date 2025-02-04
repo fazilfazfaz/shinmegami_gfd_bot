@@ -13,9 +13,9 @@ from PIL import Image
 
 from database.helper import gfd_database_helper
 from database.models import User
+from helpers.single_worker_pool import QueueBasedWorker
 from logger import logger
 from plugins.base import BasePlugin
-from plugins.whos_that_monster.single_worker_pool import QueueBasedWorker
 
 
 class WhosThatMonster(BasePlugin):
