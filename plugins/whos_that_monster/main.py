@@ -85,11 +85,11 @@ class WhosThatMonster(BasePlugin):
             self.current_monster_message = None
             self.current_monster_file = None
             return
-        if message.reference is not None and message.reference.message_id == self.current_monster_message.id:
-            if self.current_monster_message is not None:
-                await self.schedule_phrase_score_check(message)
-                return
-            await message.reply('Too late!')
+        if (message.reference is not None
+                and self.current_monster_message is not None
+                and message.reference.message_id == self.current_monster_message.id):
+            await self.schedule_phrase_score_check(message)
+            return
 
     async def schedule_phrase_score_check(self, message):
         author_id = message.author.id
