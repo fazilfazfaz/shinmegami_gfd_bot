@@ -9,6 +9,7 @@ from plugins.banner_randomizer.main import BannerRandomizer
 from plugins.comment_hearter.main import CommentHearter
 from plugins.duckhunt.main import DuckHuntGame
 from plugins.gifty_santa.main import GiftySanta
+from plugins.hallucinater.main import Hallucinater
 from plugins.icon_flipper.main import IconFlipper
 from plugins.reaction_tracker.main import ReactionTracker
 from plugins.repost_watcher.main import RepostWatcher
@@ -55,6 +56,7 @@ whos_that_monster = WhosThatMonster(client, config)
 anon_messenger = AnonMessenger(client, config)
 gifty_santa = GiftySanta(client, config)
 activity_tracker = ActivityTracker(client, config)
+hallucinater = Hallucinater(client, config)
 
 
 @client.event
@@ -96,6 +98,7 @@ async def on_message(message: discord.Message):
     await reaction_tracker.on_message(message)
     await whos_that_monster.on_message(message)
     await activity_tracker.on_message(message)
+    await hallucinater.on_message(message)
 
 
 @client.event
