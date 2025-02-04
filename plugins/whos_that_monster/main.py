@@ -23,6 +23,7 @@ class WhosThatMonster(BasePlugin):
 
     def __init__(self, client, config):
         super().__init__(client, config)
+        self.main_loop: Optional[asyncio.Task] = None
         self.current_monster: Optional[str] = None
         self.current_monster_file: Optional[str] = None
         self.current_monster_message: Optional[discord.Message] = None
@@ -30,6 +31,12 @@ class WhosThatMonster(BasePlugin):
         self.delay: int = 60
         self.queue_worker: Optional[QueueBasedWorker] = QueueBasedWorker()
         self.current_phrase_evaluations = {}
+        if 'MONSTER_RELEASE_ON_DEMAND_USERS' in config:
+            self.on_demand_release_users = list(
+                map(lambda x: int(x), config['MONSTER_RELEASE_ON_DEMAND_USERS'].split(','))
+            )
+        else:
+            self.on_demand_release_users = []
         genai.configure(api_key=config['GEMINI_KEY'])
 
     def on_ready(self):
@@ -41,7 +48,10 @@ class WhosThatMonster(BasePlugin):
             return
         self.delay: int = int(self.config['MONSTER_RELEASE_DELAY_MINUTES'])
         self.channel = self.client.get_channel(int(self.config['WHOS_THAT_MONSTER_CHANNEL']))
-        asyncio.get_event_loop().create_task(self.run())
+        self.start_main_loop()
+
+    def start_main_loop(self):
+        self.main_loop = asyncio.get_event_loop().create_task(self.run())
 
     async def run(self):
         await self.queue_worker.start()
@@ -55,9 +65,16 @@ class WhosThatMonster(BasePlugin):
                 logger.error(str(e))
 
     async def on_message(self, message: discord.Message):
-        if message.content.lower() == '.monsters':
+        msg = message.content.lower()
+        if message.channel.type == discord.ChannelType.private and msg == '.release-monster':
+            if message.author.id in self.on_demand_release_users and not self.current_monster_message:
+                await self.post_monster()
+                self.main_loop.cancel()
+                self.start_main_loop()
+            return
+        if msg == '.monsters':
             return await self.post_leaderboard()
-        if message.content.lower() == self.current_monster:
+        if msg == self.current_monster:
             gfd_database_helper.replenish_db()
             user = User.get_by_author(message.author)
             user.monsters_guessed += 1
@@ -91,6 +108,7 @@ class WhosThatMonster(BasePlugin):
             f"How apt is the caption \"{message.content}\" for the monster {monster_name} just by how it looks."
             "Do not consider its nature, biology or other details. Just the visual makeup."
             "Return a score out of 10 in the x/10 format only."
+            "Be a little strict on the scoring if the caption is very short."
         )
         response = await model.generate_content_async(prompt)
         await message.reply(f'This description is a **{response.text.strip()}**!')

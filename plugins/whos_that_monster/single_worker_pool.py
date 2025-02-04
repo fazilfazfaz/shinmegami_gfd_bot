@@ -1,6 +1,7 @@
 import asyncio
-import logging
 from typing import Callable, Any
+
+from logger import logger
 
 
 class QueueBasedWorker:
@@ -31,6 +32,6 @@ class QueueBasedWorker:
             try:
                 await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
             except Exception as e:
-                logging.error('Failure to process queue worker item' + str(e))
+                logger.error('Failure to process queue worker item' + str(e))
             finally:
                 self.queue.task_done()
