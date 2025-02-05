@@ -98,7 +98,6 @@ class WhosThatMonster(BasePlugin):
             await message.reply('No spamming!')
             return
         self.current_phrase_evaluations[author_id] = time.time()
-        await message.reply('I will have to think about this...')
         self.queue_worker.submit(self.gemini_processor, message, self.current_monster)
 
     @staticmethod
@@ -110,7 +109,13 @@ class WhosThatMonster(BasePlugin):
             "Return a score out of 10 in the x/10 format only."
             "Be a little strict on the scoring if the caption is very short."
         )
-        response = await model.generate_content_async(prompt)
+        try:
+            async with message.channel.typing():
+                response = await model.generate_content_async(prompt)
+        except Exception as e:
+            logger.error(str(e))
+            await message.reply(f'I couldn\'t digest that one')
+            return
         await message.reply(f'This description is a **{response.text.strip()}**!')
 
     @staticmethod

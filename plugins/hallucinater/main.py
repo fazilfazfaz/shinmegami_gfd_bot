@@ -4,6 +4,7 @@ import re
 import discord
 import google.generativeai as genai
 
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -34,5 +35,11 @@ class Hallucinater(BasePlugin):
         model = genai.GenerativeModel(model_name="gemini-1.5-flash")
         prompt = ('Respond to the prompt in the next line pretending to be a bot cat who is in to gaming.'
                   'Keep responses short and to the point.\n') + user_prompt
-        response = await model.generate_content_async(prompt)
-        await message.reply(response.text)
+        try:
+            async with message.channel.typing():
+                response = await model.generate_content_async(prompt)
+            await message.reply(response.text)
+        except Exception as e:
+            logger.error(str(e))
+            await message.reply('Ask me again later!')
+            return
