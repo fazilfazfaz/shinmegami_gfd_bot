@@ -1,3 +1,4 @@
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -19,5 +20,5 @@ class CommentHearter(BasePlugin):
     async def like_message(self, message):
         if len(message.attachments) < 1:
             return
-        print(f'Liking a message')
+        logger.debug(f'Liking a message')
         await message.add_reaction('❤️')

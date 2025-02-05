@@ -6,6 +6,7 @@ from googleapiclient.discovery import build
 
 from database.helper import gfd_database_helper
 from database.models import AnnouncedYoutubeVideo
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -44,11 +45,11 @@ class YoutubeAnnouncer(BasePlugin):
                 for playlist_id in self.playlists_to_track:
                     await self.check_playlist_for_new_videos(playlist_id)
             except Exception as e:
-                print(f'Failed to fetch yt videos due to error: {str(e)}')
+                logger.error(f'Failed to fetch yt videos due to error: {str(e)}')
             await asyncio.sleep(180)
 
     async def check_playlist_for_new_videos(self, playlist_id):
-        print(f'Checking playlist {playlist_id} for videos')
+        logger.info(f'Checking playlist {playlist_id} for videos')
         request = self.youtube.playlistItems().list(
             part="snippet",
             playlistId=playlist_id,
@@ -60,7 +61,7 @@ class YoutubeAnnouncer(BasePlugin):
             seconds_elapsed = time.time() - epoch_time
             video_id = video['snippet']['resourceId']['videoId']
             if seconds_elapsed <= 1800 and video_id not in self.videos_encountered:
-                print(f'Trying to post video {video["snippet"]["title"]}')
+                logger.debug(f'Trying to post video {video["snippet"]["title"]}')
                 self.videos_encountered.append(video_id)
                 await self.post_video_to_channel(video_id, video)
 
@@ -69,7 +70,7 @@ class YoutubeAnnouncer(BasePlugin):
         should_announce = AnnouncedYoutubeVideo.should_announce(video_id)
         gfd_database_helper.release_db()
         if should_announce:
-            print(f'Posting video {video["snippet"]["title"]}')
+            logger.debug(f'Posting video {video["snippet"]["title"]}')
             # thumb_quality = list(video['snippet']['thumbnails'].keys())[-1]
             # embed = discord.Embed()
             # embed.title = video['snippet']['title']

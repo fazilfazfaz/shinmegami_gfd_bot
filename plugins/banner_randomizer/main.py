@@ -11,6 +11,7 @@ import peewee
 
 from database.helper import gfd_database_helper
 from database.models import BannedBannerMessage
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -63,7 +64,7 @@ class BannerRandomizer(BasePlugin):
                 gfd_database_helper.release_db()
             self.last_banned_message = self.last_banner_message
             self.last_ban_time = time.time()
-            print("Banned banner message " + str(self.last_banner_message.id))
+            logger.info("Banned banner message " + str(self.last_banner_message.id))
             self.banner_history.pop(0)
             self.restart_runner()
             await message.reply(
@@ -118,7 +119,6 @@ class BannerRandomizer(BasePlugin):
                 banned_message = BannedBannerMessage.get_by_message_id(message.id)
                 gfd_database_helper.release_db()
                 if banned_message is not None:
-                    print("Banned banner message detected, skipping")
                     continue
                 while True:
                     if len(filtered_attachments) < 1:
@@ -128,7 +128,7 @@ class BannerRandomizer(BasePlugin):
                     else:
                         attachment_index = 0
                     attachment: discord.Attachment = filtered_attachments.pop(attachment_index)
-                    print("Setting banner to " + attachment.url)
+                    logger.debug("Setting banner to " + attachment.url)
                     try:
                         await self.client.guilds[0].edit(banner=await attachment.read())
                         banner_set = True
@@ -137,13 +137,12 @@ class BannerRandomizer(BasePlugin):
                         self.banner_history = self.banner_history[0:5]
                         break
                     except Exception as e:
-                        print('Failed to set banner', str(e))
+                        logger.error('Failed to set banner, ' + str(e))
                 if banner_set:
                     break
             await asyncio.sleep(self.banner_update_frequency)
 
     def start_runner(self):
-        print("Banner task started")
         self.run_task = asyncio.get_event_loop().create_task(self.run())
 
     def restart_runner(self):

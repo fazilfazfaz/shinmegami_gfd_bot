@@ -4,6 +4,7 @@ import time
 import discord
 import requests
 
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -36,7 +37,7 @@ class TwitchAnnouncer(BasePlugin):
 
     def refresh_twitch_key(self):
         if self.access_key is None or self.access_key_expire_time <= time.time():
-            print(f'Fetching twitch key')
+            logger.debug(f'Fetching twitch key')
             r = requests.post(url='https://id.twitch.tv/oauth2/token', data={
                 'client_id': self.config['TWITCH_CLIENT_ID'],
                 'client_secret': self.config['TWITCH_CLIENT_SECRET'],
@@ -64,7 +65,7 @@ class TwitchAnnouncer(BasePlugin):
                 await self.post_announcement_if_necessary(stream)
 
         for offline_channel in channels_now_offline:
-            print(f'{offline_channel} is now offline')
+            logger.debug(f'{offline_channel} is now offline')
             await self.channel.send(content=f'{offline_channel} is now offline on twitch :(')
 
         self.live_channels -= channels_now_offline
@@ -72,7 +73,7 @@ class TwitchAnnouncer(BasePlugin):
     async def post_announcement_if_necessary(self, stream):
         if stream['user_name'] in self.live_channels:
             return
-        print(f'Posting twitch announcement for {stream["user_name"]}')
+        logger.debug(f'Posting twitch announcement for {stream["user_name"]}')
         self.live_channels.add(stream['user_name'])
         embed = discord.Embed()
         stream_url = 'https://twitch.tv/' + stream['user_name']

@@ -2,6 +2,7 @@ import datetime
 import random
 import time
 
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -26,9 +27,9 @@ class UserSilencer(BasePlugin):
             if time.time() - self.last_silence_times[message.author.id] < 600:
                 too_soon_to_silence = True
         if chance <= 2 and not too_soon_to_silence:
-            print(f'We got {message.author.display_name}!')
+            logger.debug(f'We got {message.author.display_name}!')
             self.last_silence_times[message.author.id] = time.time()
             await message.author.timeout(datetime.timedelta(seconds=60))
             await message.reply("Oh no! you lost your mouth 😶")
         else:
-            print(f'{message.author.display_name} got away with chance {chance}')
+            logger.debug(f'{message.author.display_name} got away with chance {chance}')

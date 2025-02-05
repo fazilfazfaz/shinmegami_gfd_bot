@@ -5,6 +5,7 @@ import io
 import discord
 from PIL import Image
 
+from logger import logger
 from plugins.base import BasePlugin
 
 
@@ -31,16 +32,16 @@ class IconFlipper(BasePlugin):
                 sleep_seconds = self.get_seconds_until_hour(self.icon_flipper_hours_start)
                 flip_back_sleep_seconds = self.get_seconds_until_hour(self.icon_flipper_hours_end)
                 if sleep_seconds < flip_back_sleep_seconds:
-                    print(f'Waiting {sleep_seconds} to flip the image')
+                    logger.debug(f'Waiting {sleep_seconds} to flip the image')
                     await asyncio.sleep(sleep_seconds)
-                    print('Flipping the channel icon')
+                    logger.debug('Flipping the channel icon')
                     await self.flip_channel_icon()
-                print(f'Waiting {flip_back_sleep_seconds} to flip the image back')
+                logger.debug(f'Waiting {flip_back_sleep_seconds} to flip the image back')
                 await asyncio.sleep(flip_back_sleep_seconds)
-                print('Flipping the channel icon back')
+                logger.debug('Flipping the channel icon back')
                 await self.flip_channel_icon()
             except Exception as e:
-                print('Exception while sleeping for flipper', str(e))
+                logger.error('Exception while sleeping for flipper, ' + str(e))
                 pass
 
     async def flip_channel_icon(self):

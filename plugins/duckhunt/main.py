@@ -8,6 +8,7 @@ import discord
 
 from database.helper import gfd_database_helper
 from database.models import User, DuckAttemptLog
+from logger import logger
 from plugins.base import BasePlugin
 
 MAX_USER_MISS_COUNT = 1
@@ -116,7 +117,7 @@ class DuckHuntGame(BasePlugin):
                 minutes_to_sleep = random.randint(120, 140) * 60
                 if 'DEV_MODE' in self.config and self.config['DEV_MODE'] == 'true':
                     minutes_to_sleep = 0
-                print(f'Duck to be released after {minutes_to_sleep}')
+                logger.info(f'Duck to be released after {minutes_to_sleep}')
                 await asyncio.sleep(minutes_to_sleep)
                 await self.release_a_duck()
 
@@ -198,7 +199,7 @@ class DuckHuntGame(BasePlugin):
             current_miss_count_for_user = 0
         chance = self.calculate_hit_chance(user)
         randomval = system_random_generator.random()
-        print(f'Random value: {randomval} chance: {chance}')
+        logger.debug(f'Random value: {randomval} chance: {chance}')
         gfd_database_helper.replenish_db()
         if not randomval <= chance:
             self.current_miss_count[user.user_id] = current_miss_count_for_user + 1
@@ -218,8 +219,8 @@ class DuckHuntGame(BasePlugin):
     def calculate_hit_chance(self, user):
         shoot_time = time.time()
         spawn_time = self.last_duck_spawn_time
-        print(f'Shooting delay {shoot_time - spawn_time}')
-        print(f'User has repented: {user.has_repented_for_shooting_ducks()}')
+        logger.debug(f'Shooting delay {shoot_time - spawn_time}')
+        logger.debug(f'User has repented: {user.has_repented_for_shooting_ducks()}')
         if 1 <= shoot_time - spawn_time <= 10 or not user.has_repented_for_shooting_ducks():
             out = system_random_generator.uniform(.65, .80)
             return out
@@ -236,7 +237,7 @@ class DuckHuntGame(BasePlugin):
         await message.reply(_message)
 
     def is_duck_catchable(self, channel):
-        print(f'Checking for duck: {self.current_duck_channel} {self.last_duck_message} {channel.id}')
+        logger.debug(f'Checking for duck: {self.current_duck_channel} {self.last_duck_message} {channel.id}')
         return self.current_duck_channel is not None and \
                self.last_duck_message is not None and \
                self.last_duck_message.channel.id == channel.id
@@ -261,7 +262,7 @@ class DuckHuntGame(BasePlugin):
 
         self.current_miss_count = {}
         self.last_duck_message = await channel.send('A wild 🦆 has appeared!!')
-        print(f'Released a new duck in {channel.name} with message {self.last_duck_message.id}')
+        logger.debug(f'Released a new duck in {channel.name} with message {self.last_duck_message.id}')
         self.current_duck_channel = channel.id
         self.last_duck_spawn_time = time.time()
 

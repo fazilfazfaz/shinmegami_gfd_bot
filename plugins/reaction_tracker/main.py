@@ -35,7 +35,7 @@ class ReactionTracker(BasePlugin):
                 if len(copy) > 0:
                     await self.process_payloads(copy)
             except Exception as e:
-                print(e)
+                logger.error(str(e))
 
     @staticmethod
     async def post_emoji_stats(message: discord.Message):
