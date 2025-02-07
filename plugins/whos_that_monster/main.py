@@ -7,9 +7,9 @@ import time
 from typing import Optional
 
 import discord
-import google.generativeai as genai
 import numpy as np
 from PIL import Image
+from google import genai
 
 from database.helper import gfd_database_helper
 from database.models import User
@@ -37,7 +37,7 @@ class WhosThatMonster(BasePlugin):
             )
         else:
             self.on_demand_release_users = []
-        genai.configure(api_key=config['GEMINI_KEY'])
+        self.gen_ai_client = genai.Client(api_key=config['GEMINI_KEY'])
 
     def on_ready(self):
         if self.is_ready():
@@ -100,9 +100,7 @@ class WhosThatMonster(BasePlugin):
         self.current_phrase_evaluations[author_id] = time.time()
         self.queue_worker.submit(self.gemini_processor, message, self.current_monster)
 
-    @staticmethod
-    async def gemini_processor(message: discord.Message, monster_name):
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+    async def gemini_processor(self, message: discord.Message, monster_name):
         prompt = (
             f"How apt is the caption \"{message.content}\" for the monster {monster_name} just by how it looks."
             "Do not consider its nature, biology or other details. Just the visual makeup."
@@ -111,7 +109,10 @@ class WhosThatMonster(BasePlugin):
         )
         try:
             async with message.channel.typing():
-                response = await model.generate_content_async(prompt)
+                response = await self.gen_ai_client.aio.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=[prompt],
+                )
         except Exception as e:
             logger.error(str(e))
             await message.reply(f'I couldn\'t digest that one')
