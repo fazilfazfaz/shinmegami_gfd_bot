@@ -23,7 +23,7 @@ class Hallucinater(BasePlugin):
     async def on_message(self, message: discord.Message):
         bot_nick_name = self.config.get('BOT_NICK_NAME')
         if message.content.lower().startswith('.genimg '):
-            await self.respond_to_gen_img_prompt(message, message.content[8:])
+            await message.reply('Image generation has been de-funded by a governmental efficiency unit')
             return
         if not message.content.lower().startswith(f'{bot_nick_name}, '):
             return
@@ -40,7 +40,7 @@ class Hallucinater(BasePlugin):
             if len(get_image_attachment_count(replied_to_message)) > 0:
                 extension = 30
             else:
-                await message.reply('I only look at others media')
+                await message.reply('I only look at pics')
                 return
         if user_id in self.rate_limiter and current_time < self.rate_limiter[user_id]:
             await message.reply("Slow down!")
