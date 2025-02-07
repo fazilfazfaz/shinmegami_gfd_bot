@@ -6,6 +6,7 @@ import discord
 from google import genai
 from google.genai import types as gtypes
 
+from helpers.message_utils import mention_no_one, escape_discord_identifiers
 from logger import logger
 from plugins.base import BasePlugin
 
@@ -37,6 +38,9 @@ class Hallucinater(BasePlugin):
             replied_to_message = await message.channel.fetch_message(message.reference.message_id)
             if len(replied_to_message.attachments) > 0:
                 extension = 30
+            else:
+                await message.reply('I only look at others media')
+                return
         if user_id in self.rate_limiter and current_time < self.rate_limiter[user_id]:
             await message.reply("Slow down!")
             return
@@ -60,7 +64,7 @@ class Hallucinater(BasePlugin):
                     model="gemini-2.0-flash",
                     contents=contents,
                 )
-            await message.reply(response.text)
+            await message.reply(escape_discord_identifiers(response.text), allowed_mentions=mention_no_one)
         except Exception as e:
             logger.error(str(e))
             await message.reply(self.ask_later)

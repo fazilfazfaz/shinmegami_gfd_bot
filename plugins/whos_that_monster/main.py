@@ -13,6 +13,7 @@ from google import genai
 
 from database.helper import gfd_database_helper
 from database.models import User
+from helpers.message_utils import mention_no_one
 from helpers.single_worker_pool import QueueBasedWorker
 from logger import logger
 from plugins.base import BasePlugin
@@ -117,7 +118,7 @@ class WhosThatMonster(BasePlugin):
             logger.error(str(e))
             await message.reply(f'I couldn\'t digest that one')
             return
-        await message.reply(f'This description is a **{response.text.strip()}**!')
+        await message.reply(f'This description is a **{response.text.strip()}**!', allowed_mentions=mention_no_one)
 
     @staticmethod
     def get_image_bytes(image: Image) -> io.BytesIO:
