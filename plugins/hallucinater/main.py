@@ -37,7 +37,7 @@ class Hallucinater(BasePlugin):
         replied_to_message = None
         if message.reference is not None and isinstance(message.reference, discord.MessageReference):
             replied_to_message = await message.channel.fetch_message(message.reference.message_id)
-            if len(get_image_attachment_count(replied_to_message)) > 0:
+            if get_image_attachment_count(replied_to_message) > 0:
                 extension = 30
             else:
                 await message.reply('I only look at pics')
