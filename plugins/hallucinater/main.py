@@ -6,7 +6,7 @@ import discord
 from google import genai
 from google.genai import types as gtypes
 
-from helpers.message_utils import mention_no_one, escape_discord_identifiers
+from helpers.message_utils import mention_no_one, escape_discord_identifiers, get_image_attachment_count
 from logger import logger
 from plugins.base import BasePlugin
 
@@ -21,12 +21,13 @@ class Hallucinater(BasePlugin):
         self.image_gen_rate_limiter = {}
 
     async def on_message(self, message: discord.Message):
+        bot_nick_name = self.config.get('BOT_NICK_NAME')
         if message.content.lower().startswith('.genimg '):
             await self.respond_to_gen_img_prompt(message, message.content[8:])
             return
-        if not message.content.lower().startswith('herm, '):
+        if not message.content.lower().startswith(f'{bot_nick_name}, '):
             return
-        user_prompt = re.sub(r'^herm, *', '', message.content, flags=re.IGNORECASE).strip()
+        user_prompt = re.sub(rf'^{bot_nick_name}, *', '', message.content, flags=re.IGNORECASE).strip()
         if user_prompt == '':
             await message.reply('I got nothing to say to that!')
             return
@@ -36,7 +37,7 @@ class Hallucinater(BasePlugin):
         replied_to_message = None
         if message.reference is not None and isinstance(message.reference, discord.MessageReference):
             replied_to_message = await message.channel.fetch_message(message.reference.message_id)
-            if len(replied_to_message.attachments) > 0:
+            if len(get_image_attachment_count(replied_to_message)) > 0:
                 extension = 30
             else:
                 await message.reply('I only look at others media')
@@ -53,6 +54,8 @@ class Hallucinater(BasePlugin):
                             'Keep responses short and to the point.\n') + user_prompt
         if replied_to_message is not None and len(replied_to_message.attachments) > 0:
             for attachment in replied_to_message.attachments:
+                if not attachment.content_type.startswith('image/'):
+                    continue
                 img_bytes = await attachment.read()
                 contents.append(gtypes.Part.from_bytes(data=img_bytes, mime_type=attachment.content_type))
             contents.append(user_prompt)

@@ -30,6 +30,9 @@ config = dotenv_values('.env')
 if 'DISCORD_TOKEN' not in config:
     raise Exception("DISCORD_TOKEN is not configured")
 
+if 'BOT_NICK_NAME' not in config:
+    raise Exception("BOT_NICK_NAME is not configured")
+
 TOKEN = config['DISCORD_TOKEN']
 
 intents = discord.Intents.default()
