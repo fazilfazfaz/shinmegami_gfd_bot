@@ -35,9 +35,6 @@ class PixelCounter(BasePlugin):
                 image_data = await attachment.read()
                 img = Image.open(io.BytesIO(image_data))
                 image_np = np.array(img)
-                if image_np.shape[2] != 3:
-                    await message.reply('I can only process RGB images', allowed_mentions=mention_no_one)
-                    return
                 horizontal_res = []
                 vertical_res = []
                 for row in image_np:
@@ -50,9 +47,9 @@ class PixelCounter(BasePlugin):
                     vertical_res.append(changes)
                 horizontal = int(np.floor(np.mean(horizontal_res)))
                 vertical = int(np.floor(np.mean(vertical_res)))
-                detected_res.append((horizontal, vertical,))
+                detected_res.append((horizontal, vertical, img.width, img.height,))
         text = 'Detected pixel counts:\n'
         for res in detected_res:
-            text += f'**{res[0]}** x **{res[1]}**\n'
+            text += f'**{res[0]}** x **{res[1]}** (Original **{res[2]}** x **{res[3]}**)\n'
         text += '\n*This might be completely wrong*'
         await message.reply(text, allowed_mentions=mention_no_one)
