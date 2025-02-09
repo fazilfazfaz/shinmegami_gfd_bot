@@ -45,8 +45,8 @@ class PixelCounter(BasePlugin):
                     vertical_pixels = image_transposed[y]
                     changes = np.sum(np.any(vertical_pixels[:-1] != vertical_pixels[1:], axis=1))
                     vertical_res.append(changes)
-                horizontal = int(np.floor(np.mean(horizontal_res)))
-                vertical = int(np.floor(np.mean(vertical_res)))
+                horizontal = int(np.floor(np.max(horizontal_res)))
+                vertical = int(np.floor(np.max(vertical_res)))
                 detected_res.append((horizontal, vertical, img.width, img.height,))
         text = 'Detected pixel counts:\n'
         for res in detected_res:
