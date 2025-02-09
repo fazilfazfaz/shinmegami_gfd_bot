@@ -11,6 +11,8 @@ from plugins.pixel_counter.video_pixel_counter import process_video
 
 
 class PixelCounter(BasePlugin):
+    error_reply = 'I cant math this one'
+
     def __init__(self, client, config):
         super().__init__(client, config)
         self.max_frames = config.get('VIDEO_PIXEL_COUNT_MAX_FRAMES', 50)
@@ -29,7 +31,7 @@ class PixelCounter(BasePlugin):
             await self.count_pixels(message, replied_to_message)
         except Exception as e:
             logger.error(str(e))
-            await message.reply('I cant math this one', allowed_mentions=mention_no_one)
+            await message.reply(self.error_reply, allowed_mentions=mention_no_one)
 
     async def count_pixels(self, message, replied_to_message: discord.Message):
         detected_res = []
@@ -46,6 +48,10 @@ class PixelCounter(BasePlugin):
                         )
                         temp_file.close()
                         os.unlink(temp_file.name)
+                        horizontal_avg = results['horizontal_avg']
+                        if horizontal_avg < 1:
+                            message.reply(self.error_reply, allowed_mentions=mention_no_one)
+                            return
                         detected_res.append(results)
                     except Exception as e:
                         logger.error(str(e))

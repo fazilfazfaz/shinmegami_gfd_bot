@@ -26,7 +26,7 @@ def process_frame(frame):
 
     # Process vertical changes
     image_transposed = np.transpose(frame_array, (1, 0, 2))
-    for y in range(frame_array.shape[0]):
+    for y in range(image_transposed.shape[0]):
         vertical_pixels = image_transposed[y]
         changes = np.sum(np.any(vertical_pixels[:-1] != vertical_pixels[1:], axis=1))
         vertical_res.append(changes)
