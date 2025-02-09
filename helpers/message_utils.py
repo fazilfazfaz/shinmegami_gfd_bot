@@ -12,3 +12,8 @@ def escape_discord_identifiers(message):
 def get_image_attachment_count(message: discord.Message):
     return sum(1 for attachment in message.attachments if
                attachment.content_type and attachment.content_type.startswith('image/'))
+
+
+def get_video_attachment_count(message: discord.Message):
+    return sum(1 for attachment in message.attachments if
+               attachment.content_type and attachment.content_type.startswith('video/'))

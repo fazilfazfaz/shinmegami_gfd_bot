@@ -12,3 +12,4 @@ protobuf==4.23.1
 google-api-python-client==2.86.0
 plotly==5.24.1
 nltk==3.9.1
+opencv-python==4.11.0.86
