@@ -1,5 +1,6 @@
 import os
 import tempfile
+from math import floor
 
 import discord
 
@@ -50,10 +51,13 @@ class PixelCounter(BasePlugin):
             original_height = res['original_height']
             horizontal_percentage = res['horizontal_percentage']
             vertical_percentage = res['vertical_percentage']
+            horizontal_percentage_4k = floor(res['horizontal_percentage'] * 3840 / 100)
+            vertical_percentage_4k = floor(res['vertical_percentage'] * 2160 / 100)
             text += (
                 f"**{horizontal_avg}** x **{vertical_avg}** "
                 f"(Original **{original_width}** x **{original_height}**) "
-                f"(Scale **{horizontal_percentage}%** x **{vertical_percentage}%**)\n"
+                f"(Scale **{horizontal_percentage}%** x **{vertical_percentage}%**) "
+                f"(Equivalent to **{horizontal_percentage_4k}%** x **{vertical_percentage_4k}%** at 4K)\n"
             )
         text += '\n*This might be completely wrong*'
         await message.reply(text, allowed_mentions=mention_no_one)
