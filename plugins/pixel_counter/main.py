@@ -11,6 +11,11 @@ from plugins.pixel_counter.video_pixel_counter import process_video
 
 
 class PixelCounter(BasePlugin):
+    def __init__(self, client, config):
+        super().__init__(client, config)
+        self.max_frames = config.get('VIDEO_PIXEL_COUNT_MAX_FRAMES', 50)
+        self.num_workers = config.get('VIDEO_PIXEL_COUNT_NUM_WORKERS', 8)
+
     async def on_message(self, message: discord.Message):
         if message.reference is None or not isinstance(message.reference, discord.MessageReference):
             return
@@ -26,8 +31,7 @@ class PixelCounter(BasePlugin):
             logger.error(str(e))
             await message.reply('I cant math this one', allowed_mentions=mention_no_one)
 
-    @staticmethod
-    async def count_pixels(message, replied_to_message: discord.Message):
+    async def count_pixels(self, message, replied_to_message: discord.Message):
         detected_res = []
         async with message.channel.typing():
             for attachment in replied_to_message.attachments:
@@ -35,7 +39,11 @@ class PixelCounter(BasePlugin):
                     temp_file = tempfile.NamedTemporaryFile(delete=False)
                     try:
                         await attachment.save(temp_file.name)
-                        results = await process_video(temp_file.name, max_frames=50)
+                        results = await process_video(
+                            temp_file.name,
+                            max_frames=self.max_frames,
+                            num_workers=self.num_workers
+                        )
                         temp_file.close()
                         os.unlink(temp_file.name)
                         detected_res.append(results)
