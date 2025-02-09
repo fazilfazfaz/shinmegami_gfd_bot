@@ -57,7 +57,7 @@ class PixelCounter(BasePlugin):
                 f"**{horizontal_avg}** x **{vertical_avg}** "
                 f"(Original **{original_width}** x **{original_height}**) "
                 f"(Scale **{horizontal_percentage}%** x **{vertical_percentage}%**) "
-                f"(Equivalent to **{horizontal_percentage_4k}%** x **{vertical_percentage_4k}%** at 4K)\n"
+                f"(Equivalent to **{horizontal_percentage_4k}** x **{vertical_percentage_4k}** at 4K)\n"
             )
         text += '\n*This might be completely wrong*'
         await message.reply(text, allowed_mentions=mention_no_one)
