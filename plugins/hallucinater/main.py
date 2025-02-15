@@ -1,6 +1,9 @@
 import asyncio
+import datetime
 import io
+import random
 import re
+from typing import Optional
 
 import discord
 from google import genai
@@ -18,12 +21,27 @@ class Hallucinater(BasePlugin):
         super().__init__(client, config)
         self.gen_ai_client = genai.Client(api_key=config.get('GEMINI_KEY'))
         self.rate_limiter = {}
-        self.image_gen_rate_limiter = {}
+        self.img_gen_winner: Optional[int] = None
+        self.img_gen_lottery_channel: Optional[discord.TextChannel] = None
+        self.img_gen_lottery_ignore_ids = []
+        self.img_gen_lottery_ignore_ids = list(
+            map(lambda x: int(x), filter(None, self.config.get('IMAGE_GEN_LOTTERY_IGNORE_IDS', '').split(',')))
+        )
+        self.img_gen_lottery_hour = int(self.config.get('IMAGE_GEN_LOTTERY_HOUR', 20))
+        self.img_gen_busy = False
+
+    def on_ready(self):
+        if self.is_ready():
+            return
+        if 'IMAGE_GEN_LOTTERY_CHANNEL' not in self.config:
+            return
+        self.img_gen_lottery_channel = self.client.get_channel(int(self.config.get('IMAGE_GEN_LOTTERY_CHANNEL')))
+        asyncio.create_task(self.run_image_gen_lottery())
 
     async def on_message(self, message: discord.Message):
         bot_nick_name = self.config.get('BOT_NICK_NAME')
         if message.content.lower().startswith('.genimg '):
-            await message.reply('Image generation has been de-funded by a governmental efficiency unit')
+            await self.respond_to_gen_img_prompt(message, message.content[8:])
             return
         if not message.content.lower().startswith(f'{bot_nick_name}, '):
             return
@@ -74,14 +92,24 @@ class Hallucinater(BasePlugin):
             return
 
     async def respond_to_gen_img_prompt(self, message, user_prompt):
+        if self.img_gen_busy:
+            return
+        self.img_gen_busy = True
+        if self.img_gen_winner is None:
+            await message.reply('Wait for the next lottery ⏰')
+            self.img_gen_busy = False
+            return
+        if self.img_gen_winner != message.author.id:
+            await message.reply(
+                'I\'m waiting for the real winner to respond!\n'
+                'Identity theft is not a joke!'
+            )
+            self.img_gen_busy = False
+            return
         if user_prompt == '':
             await message.reply('I need something to work with!')
+            self.img_gen_busy = False
             return
-        if message.author.id in self.image_gen_rate_limiter \
-                and asyncio.get_running_loop().time() < self.image_gen_rate_limiter[message.author.id]:
-            await message.reply("Image gen is expensive - try later!")
-            return
-        self.image_gen_rate_limiter[message.author.id] = asyncio.get_running_loop().time() + 30 * 60
         try:
             async with message.channel.typing():
                 response = await self.gen_ai_client.aio.models.generate_images(
@@ -99,7 +127,43 @@ class Hallucinater(BasePlugin):
             img_bytes.write(generated_image.image.image_bytes)
             img_bytes.seek(0)
             await message.reply(file=discord.File(img_bytes, 'image.png'))
+            self.img_gen_winner = None
         except Exception as e:
             logger.error(str(e))
             await message.reply(self.ask_later)
-            return
+        finally:
+            self.img_gen_busy = False
+
+    async def run_image_gen_lottery(self):
+        while True:
+            now = datetime.datetime.now()
+            target_time = ((now + datetime.timedelta(days=1))
+                           .replace(hour=self.img_gen_lottery_hour, minute=0, second=0, microsecond=0))
+            delta_seconds = (target_time - now).total_seconds()
+            try:
+                members = [
+                    member for member in self.img_gen_lottery_channel.members
+                    if
+                    not member.bot and member.id != self.client.user.id and member.id not in self.img_gen_lottery_ignore_ids
+                ]
+                if not members:
+                    logger.info("No eligible members found in the channel for gen image lottery")
+                else:
+                    self.img_gen_winner = random.choice(members).id
+                    logger.info(f"Image generation lottery winner: {self.img_gen_winner}")
+                    await self.img_gen_lottery_channel.send(
+                        f"Congratulations <@{self.img_gen_winner}>, you are the image generation lottery winner for today! 🎉\n"
+                        "You can generate an image with the `.genimg` command!"
+                    )
+                logger.info(f'Sleeping for {delta_seconds} seconds until next gen image lottery')
+                await asyncio.sleep(max(delta_seconds, 0))
+                if self.img_gen_winner is not None:
+                    logger.info(f'Image generation lottery lapsed')
+                    img_gen_winner = self.img_gen_winner
+                    self.img_gen_winner = None
+                    await self.img_gen_lottery_channel.send(
+                        f"<@{img_gen_winner}>, you didn't generate an image!"
+                    )
+            except Exception as e:
+                logger.error(f"Error in run_image_gen_lottery: {str(e)}")
+                await asyncio.sleep(max(delta_seconds, 0))
