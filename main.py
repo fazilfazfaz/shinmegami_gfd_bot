@@ -76,7 +76,6 @@ async def on_ready():
     icon_flipper.on_ready()
     reaction_tracker.on_ready()
     whos_that_monster.on_ready()
-    hallucinater.on_ready()
 
 
 @client.event

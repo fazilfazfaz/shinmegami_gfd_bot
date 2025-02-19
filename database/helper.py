@@ -36,6 +36,7 @@ gfd_database_helper = BaseDatabaseHelper(database.models.db, [
     database.models.ActivityGame,
     database.models.ActivityGamePlatform,
     database.models.Activity,
+    database.models.GeneratedImageLog,
 ])
 
 gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links_v2, [

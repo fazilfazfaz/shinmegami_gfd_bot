@@ -1,3 +1,4 @@
+import datetime
 from urllib.parse import urlparse
 
 from peewee import *
@@ -234,3 +235,28 @@ class Activity(BaseModel):
     @staticmethod
     def get_latest_by_user_id(user_id):
         return Activity.select().where(Activity.user_id == user_id).order_by(Activity.id.desc()).first()
+
+
+class GeneratedImageLog(BaseModel):
+    id = BigAutoField(primary_key=True)
+    month = IntegerField(null=False)
+    year = IntegerField(null=False)
+    count = IntegerField(default=0)
+
+    @staticmethod
+    def increment_count():
+        current_date = datetime.date.today()
+        month = current_date.month
+        year = current_date.year
+
+        log, created = GeneratedImageLog.get_or_create(month=month, year=year, defaults={"count": 0})
+        log.count += 1
+        log.save()
+
+    @staticmethod
+    def get_count():
+        current_date = datetime.date.today()
+        month = current_date.month
+        year = current_date.year
+        log, created = GeneratedImageLog.get_or_create(month=month, year=year, defaults={"count": 0})
+        return log.count
