@@ -97,7 +97,7 @@ class Hallucinater(BasePlugin):
                     prompt=user_prompt,
                     config=gtypes.GenerateImagesConfig(
                         number_of_images=1,
-                        safety_filter_level=SafetyFilterLevel.BLOCK_NONE,
+                        safety_filter_level=SafetyFilterLevel.BLOCK_ONLY_HIGH,
                         output_mime_type='image/png',
                     )
                 )
