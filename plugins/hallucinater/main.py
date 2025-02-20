@@ -5,7 +5,6 @@ import re
 import discord
 from google import genai
 from google.genai import types as gtypes
-from google.genai.types import SafetyFilterLevel
 
 import database.helper
 from database.models import GeneratedImageLog
@@ -97,7 +96,6 @@ class Hallucinater(BasePlugin):
                     prompt=user_prompt,
                     config=gtypes.GenerateImagesConfig(
                         number_of_images=1,
-                        safety_filter_level=SafetyFilterLevel.BLOCK_ONLY_HIGH,
                         output_mime_type='image/png',
                     )
                 )
