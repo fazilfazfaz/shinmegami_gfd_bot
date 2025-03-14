@@ -13,24 +13,42 @@ from logger import logger
 from plugins.base import BasePlugin
 
 
+class RateLimit:
+    MIN_INTERVAL = 60
+
+    def __init__(self):
+        self.start_time = asyncio.get_running_loop().time()
+        self.count = 0
+
+    def increment(self):
+        self.count += 1
+
+    def is_limit_reached(self, limit=3) -> bool:
+        has_expired = (asyncio.get_running_loop().time() - self.start_time) > self.MIN_INTERVAL
+        if has_expired:
+            self.count = 0
+            self.start_time = asyncio.get_running_loop().time()
+            return False
+        return self.count >= limit
+
+
 class Hallucinater(BasePlugin):
     ask_later = 'Ask me again later!'
 
     def __init__(self, client, config):
         super().__init__(client, config)
         self.gen_ai_client = genai.Client(api_key=config.get('GEMINI_KEY'))
-        self.rate_limiter = {}
+        self.rate_limiter: dict[int, RateLimit] = {}
         self.img_gen_count_max_per_month = int(self.config.get('IMG_GEN_COUNT_MAX_PER_MONTH', 100))
         self.bot_nick_name = self.config.get('BOT_NICK_NAME')
 
     async def on_message(self, message: discord.Message):
-        current_time = asyncio.get_running_loop().time()
         user_id = message.author.id
+        self.rate_limiter.setdefault(user_id, RateLimit())
         if message.content.lower().startswith('.genimg '):
-            if user_id in self.rate_limiter and current_time < self.rate_limiter[user_id]:
+            if self.rate_limiter[user_id].is_limit_reached(2):
                 await message.reply("Slow down!")
                 return
-            self.rate_limiter[user_id] = current_time + 60
             await self.respond_to_gen_img_prompt(message, message.content[8:])
             return
         if not message.content.lower().startswith(f'{self.bot_nick_name}, '):
@@ -39,19 +57,18 @@ class Hallucinater(BasePlugin):
         if user_prompt == '':
             await message.reply('I got nothing to say to that!')
             return
-        extension = 5
+        limit = 30
         replied_to_message = None
         if message.reference is not None and isinstance(message.reference, discord.MessageReference):
             replied_to_message = await message.channel.fetch_message(message.reference.message_id)
             if get_image_attachment_count(replied_to_message) > 0:
-                extension = 30
+                limit = 5
             else:
                 await message.reply('I only look at pics')
                 return
-        if user_id in self.rate_limiter and current_time < self.rate_limiter[user_id]:
+        if self.rate_limiter[user_id].is_limit_reached(limit):
             await message.reply("Slow down!")
             return
-        self.rate_limiter[user_id] = current_time + extension
         await self.respond_to_prompt(message, replied_to_message, user_prompt)
 
     async def respond_to_prompt(self, message: discord.Message, replied_to_message: discord.Message, user_prompt):
@@ -74,6 +91,7 @@ class Hallucinater(BasePlugin):
                     contents=contents,
                 )
             await message.reply(escape_discord_identifiers(response.text), allowed_mentions=mention_no_one)
+            self.rate_limiter[message.author.id].increment()
         except Exception as e:
             logger.error(str(e))
             await message.reply(self.ask_later)
@@ -113,6 +131,7 @@ class Hallucinater(BasePlugin):
             database.helper.gfd_database_helper.replenish_db()
             GeneratedImageLog.increment_count()
             database.helper.gfd_database_helper.release_db()
+            self.rate_limiter[message.author.id].increment()
         except Exception as e:
             logger.error(str(e))
             await message.reply(self.ask_later)
