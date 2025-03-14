@@ -41,6 +41,26 @@
           }
         }
       },
+      "messageProcessor": {
+        "type": "string",
+        "enum": [
+          "COUNTDOWN"
+        ]
+      },
+      "messageProcessorArgs": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "countdownTo": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        ]
+      },
       "message": {
         "type": "string",
         "minLength": 1

@@ -9,7 +9,7 @@ import jsonschema
 from plugins.base import BasePlugin
 
 
-class ResponseConditionType(str, Enum):
+class ResponseConditionType(Enum):
     HAS_GIF = 'HAS_GIF'
     EXACT_TEXT = 'EXACT_TEXT'
     HAS_TEXT = 'HAS_TEXT'
@@ -22,11 +22,28 @@ class ResponseCondition:
         self.condition_type = condition_type
 
 
+class MessageProcessorType(Enum):
+    COUNTDOWN = 'COUNTDOWN'
+
+
+class MessageProcessor:
+    def __init__(self, message_processor_type: MessageProcessorType, message_processor_args: dict):
+        self.message_processor_type = message_processor_type
+        self.message_processor_args = message_processor_args
+
+
 class Response:
-    def __init__(self, user_ids: list[int], conditions: list[ResponseCondition], message: str):
+    def __init__(
+            self,
+            user_ids: list[int],
+            conditions: list[ResponseCondition],
+            message: str,
+            message_processor: Optional[MessageProcessor] = None,
+    ):
         self.user_ids = user_ids
         self.conditions = conditions
         self.message = message
+        self.message_processor = message_processor
 
 
 class UserMessageResponder(BasePlugin):
@@ -45,11 +62,17 @@ class UserMessageResponder(BasePlugin):
             conditions = []
             if 'conditions' in response:
                 for condition in response['conditions']:
-                    condition_type: ResponseConditionType = ResponseConditionType[condition['type']]
+                    condition_type = ResponseConditionType[condition['type']]
                     condition_value = condition['value'] if 'value' in condition else None
                     conditions.append(ResponseCondition(condition_type, condition_value))
+            message_processor = None
+            if 'messageProcessor' in response:
+                message_processor_type = MessageProcessorType[response['messageProcessor']]
+                message_processor_args = response.get('messageProcessorArgs', None)
+                message_processor = MessageProcessor(message_processor_type, message_processor_args)
             user_ids = response['user_ids'] if 'user_ids' in response else []
-            self.responses.append(Response(user_ids, conditions, response['message']))
+            r = Response(user_ids, conditions, response['message'], message_processor)
+            self.responses.append(r)
 
     async def on_message(self, message: discord.Message):
         if len(self.responses) < 1:
@@ -60,7 +83,10 @@ class UserMessageResponder(BasePlugin):
                     continue
             if not self.response_applicable(_, message):
                 continue
-            await message.reply(_.message, mention_author=False)
+            resp_message = _.message
+            if _.message_processor is not None:
+                resp_message = self.run_message_processor(_.message_processor, resp_message)
+            await message.reply(resp_message, mention_author=False)
 
     @staticmethod
     def response_applicable(response: Response, message: discord.Message) -> bool:
@@ -80,3 +106,18 @@ class UserMessageResponder(BasePlugin):
                     if str(message.channel.id) in channels:
                         return False
         return True
+
+    @staticmethod
+    def run_message_processor(message_processor, resp_message) -> str:
+        if message_processor.message_processor_type == MessageProcessorType.COUNTDOWN:
+            countdown_to = message_processor.message_processor_args['countdownTo']
+            current_epoch = int(discord.utils.utcnow().timestamp())
+            seconds_until = countdown_to - current_epoch
+            days, remainder = divmod(seconds_until, 86400)
+            hours, remainder = divmod(remainder, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            return resp_message.replace('{D}', str(days)) \
+                .replace('{H}', str(hours)) \
+                .replace('{M}', str(minutes)) \
+                .replace('{S}', str(seconds))
+        return resp_message
