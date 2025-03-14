@@ -111,13 +111,20 @@ class UserMessageResponder(BasePlugin):
     def run_message_processor(message_processor, resp_message) -> str:
         if message_processor.message_processor_type == MessageProcessorType.COUNTDOWN:
             countdown_to = message_processor.message_processor_args['countdownTo']
-            current_epoch = int(discord.utils.utcnow().timestamp())
-            seconds_until = countdown_to - current_epoch
-            days, remainder = divmod(seconds_until, 86400)
-            hours, remainder = divmod(remainder, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            return resp_message.replace('{D}', str(days)) \
-                .replace('{H}', str(hours)) \
-                .replace('{M}', str(minutes)) \
-                .replace('{S}', str(seconds))
+            seconds_until = countdown_to - int(discord.utils.utcnow().timestamp())
+            days, hours, minutes, seconds = (
+                seconds_until // 86400,
+                (seconds_until % 86400) // 3600,
+                (seconds_until % 3600) // 60,
+                seconds_until % 60,
+            )
+            units = {
+                'D': (days, 'Day' if days == 1 else 'Days'),
+                'H': (hours, 'Hour' if hours == 1 else 'Hours'),
+                'M': (minutes, 'Min' if minutes == 1 else 'Mins'),
+                'S': (seconds, 'Sec' if seconds == 1 else 'Secs'),
+            }
+            for key, (value, text) in units.items():
+                resp_message = resp_message.replace(f'{{{key}}}', str(value)).replace(f'{{{key}T}}', text)
+            return resp_message
         return resp_message
