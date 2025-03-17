@@ -112,6 +112,8 @@ class UserMessageResponder(BasePlugin):
         if message_processor.message_processor_type == MessageProcessorType.COUNTDOWN:
             countdown_to = message_processor.message_processor_args['countdownTo']
             seconds_until = countdown_to - int(discord.utils.utcnow().timestamp())
+            if seconds_until < 0:
+                return 'This countdown was already completed!'
             days, hours, minutes, seconds = (
                 seconds_until // 86400,
                 (seconds_until % 86400) // 3600,
