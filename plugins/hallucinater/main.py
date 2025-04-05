@@ -1,5 +1,7 @@
 import asyncio
+import datetime
 import io
+import random
 import re
 
 import discord
@@ -41,17 +43,26 @@ class Hallucinater(BasePlugin):
         self.rate_limiter: dict[int, RateLimit] = {}
         self.img_gen_count_max_per_month = int(self.config.get('IMG_GEN_COUNT_MAX_PER_MONTH', 100))
         self.bot_nick_name = self.config.get('BOT_NICK_NAME')
+        self.ai_random_available = self.config.get('AI_RANDOM_AVAILABLE', 'false') == 'true'
+        self.ai_random_available_from = None
+        self.ai_random_available_to = None
 
     async def on_message(self, message: discord.Message):
         user_id = message.author.id
         self.rate_limiter.setdefault(user_id, RateLimit())
         if message.content.lower().startswith('.genimg '):
+            if self.ai_random_available and not self.is_ai_available():
+                await self.respond_ai_not_available(message)
+                return
             if self.rate_limiter[user_id].is_limit_reached(2):
                 await message.reply("Slow down!")
                 return
             await self.respond_to_gen_img_prompt(message, message.content[8:])
             return
         if not message.content.lower().startswith(f'{self.bot_nick_name}, '):
+            return
+        if self.ai_random_available and not self.is_ai_available():
+            await self.respond_ai_not_available(message)
             return
         user_prompt = re.sub(rf'^{self.bot_nick_name}, *', '', message.content, flags=re.IGNORECASE).strip()
         if user_prompt == '':
@@ -135,3 +146,24 @@ class Hallucinater(BasePlugin):
         except Exception as e:
             logger.error(str(e))
             await message.reply(self.ask_later)
+
+    def is_ai_available(self):
+        if self.ai_random_available_from is None or self.ai_random_available_to < datetime.datetime.now():
+            available_after = random.randint(1, 2)
+            self.ai_random_available_from = datetime.datetime.now() + datetime.timedelta(hours=available_after)
+            self.ai_random_available_to = self.ai_random_available_from + datetime.timedelta(hours=1)
+        return self.ai_random_available_from <= datetime.datetime.now() <= self.ai_random_available_to
+
+    async def respond_ai_not_available(self, message: discord.Message):
+        if message.content.lower().startswith('.genimg'):
+            ai_random_disable_template = self.config.get('AI_RANDOM_DISABLE_TEMPLATE_IMG_GEN')
+        else:
+            ai_random_disable_template = self.config.get('AI_RANDOM_DISABLE_TEMPLATE_GENERAL')
+        if ai_random_disable_template is None:
+            return
+        message_content = (
+            ai_random_disable_template
+            .replace('{TIME_FROM}', f'<t:{int(self.ai_random_available_from.timestamp())}:F>')
+            .replace('{TIME_TO}', f'<t:{int(self.ai_random_available_to.timestamp())}:F>')
+        )
+        await message.reply(message_content)
