@@ -84,8 +84,6 @@ class Hallucinater(BasePlugin):
 
     async def respond_to_prompt(self, message: discord.Message, replied_to_message: discord.Message, user_prompt):
         contents = []
-        non_image_prompt = ('Respond to the prompt in the next line pretending to be a bot cat who is in to gaming.'
-                            'Keep responses short and to the point.\n') + user_prompt
         if replied_to_message is not None and len(replied_to_message.attachments) > 0:
             for attachment in replied_to_message.attachments:
                 if not attachment.content_type.startswith('image/'):
@@ -94,12 +92,15 @@ class Hallucinater(BasePlugin):
                 contents.append(gtypes.Part.from_bytes(data=img_bytes, mime_type=attachment.content_type))
             contents.append(user_prompt)
         else:
-            contents.append(non_image_prompt)
+            contents.append(user_prompt)
         try:
             async with message.channel.typing():
                 response = await self.gen_ai_client.aio.models.generate_content(
                     model="gemini-2.0-flash",
                     contents=contents,
+                    config=gtypes.GenerateContentConfig(
+                        system_instruction=self.config.get('AI_SYSTEM_INSTRUCTION', ''),
+                    )
                 )
             await message.reply(escape_discord_identifiers(response.text), allowed_mentions=mention_no_one)
             self.rate_limiter[message.author.id].increment()
