@@ -184,6 +184,8 @@ class WhosThatMonster(BasePlugin):
         ]
         users = User.select().order_by(User.monsters_guessed.desc())
         for user in users:
+            if user.user_id == self.client.user.id:
+                continue
             message_lines.append(f'<@{user.user_id}>: {user.monsters_guessed}')
         await self.channel.send(content="\n".join(message_lines), allowed_mentions=discord.AllowedMentions(users=False))
 
