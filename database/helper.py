@@ -46,3 +46,7 @@ gfd_links_database_helper = BaseDatabaseHelper(database.models.db_links_v2, [
 gfd_emojis_database_helper = BaseDatabaseHelper(database.models.db_emojis, [
     database.models.UserReaction,
 ])
+
+gfd_message_stats_database_helper = BaseDatabaseHelper(database.models.db_message_stats, [
+    database.models.DailyMessageCount,
+])

@@ -7,6 +7,7 @@ db = SqliteDatabase('gfd.db')
 db_links = SqliteDatabase('gfd_links.db')
 db_links_v2 = SqliteDatabase('gfd_links_v2.db')
 db_emojis = SqliteDatabase('gfd_emojis.db')
+db_message_stats = SqliteDatabase('gfd_message_stats.db')
 
 
 class BaseModel(Model):
@@ -260,3 +261,53 @@ class GeneratedImageLog(BaseModel):
         year = current_date.year
         log, created = GeneratedImageLog.get_or_create(month=month, year=year, defaults={"count": 0})
         return log.count
+
+
+class DailyMessageCount(BaseModel):
+    user_id = BigIntegerField(null=False, index=True)
+    date = DateField(null=False)
+    channel_id = BigIntegerField(null=True, default=None)
+    thread_id = BigIntegerField(null=True, default=None)
+    message_count = IntegerField(default=0)
+
+    class Meta:
+        database = db_message_stats
+        indexes = (
+            (('user_id', 'channel_id', 'thread_id', 'date'), True),
+        )
+
+    @staticmethod
+    def increment_message_count(user_id, channel_id=None, thread_id=None, date=None, increment_count=1):
+        if not date:
+            date = datetime.date.today()
+        if channel_id is None and thread_id is None:
+            raise ValueError('Either channel_id or thread_id must be specified')
+        row, created = DailyMessageCount.get_or_create(
+            user_id=user_id,
+            date=date,
+            channel_id=channel_id,
+            thread_id=thread_id
+        )
+        row.message_count += increment_count
+        row.save()
+
+    @staticmethod
+    def get_message_count(user_id, date=None, channel_id=None, thread_id=None):
+        if not date:
+            date = datetime.date.today()
+        row = DailyMessageCount.get_or_none(user_id=user_id, date=date, channel_id=channel_id, thread_id=thread_id)
+        return row.message_count if row else 0
+
+    @staticmethod
+    def get_aggregated_counts(start_date, end_date=None):
+        if not end_date:
+            end_date = datetime.date.today()
+
+        query = (DailyMessageCount
+                 .select(DailyMessageCount.user_id,
+                         fn.SUM(DailyMessageCount.message_count).alias('total_messages'))
+                 .where((DailyMessageCount.date >= start_date) & (DailyMessageCount.date <= end_date))
+                 .group_by(DailyMessageCount.user_id)
+                 .order_by(SQL('total_messages').desc()))  # Order by total messages descending
+
+        return list(query)

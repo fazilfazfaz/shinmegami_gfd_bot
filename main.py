@@ -11,6 +11,7 @@ from plugins.duckhunt.main import DuckHuntGame
 from plugins.gifty_santa.main import GiftySanta
 from plugins.hallucinater.main import Hallucinater
 from plugins.icon_flipper.main import IconFlipper
+from plugins.message_statistics_tracker.main import MessageStatisticsTracker
 from plugins.reaction_tracker.main import ReactionTracker
 from plugins.repost_watcher.main import RepostWatcher
 from plugins.smoothie_maker.main import SmoothieMaker
@@ -60,6 +61,7 @@ anon_messenger = AnonMessenger(client, config)
 gifty_santa = GiftySanta(client, config)
 activity_tracker = ActivityTracker(client, config)
 hallucinater = Hallucinater(client, config)
+message_stats_tracker = MessageStatisticsTracker(client, config)
 
 
 @client.event
@@ -76,6 +78,7 @@ async def on_ready():
     icon_flipper.on_ready()
     reaction_tracker.on_ready()
     whos_that_monster.on_ready()
+    message_stats_tracker.on_ready()
 
 
 @client.event
@@ -102,6 +105,7 @@ async def on_message(message: discord.Message):
     await whos_that_monster.on_message(message)
     await activity_tracker.on_message(message)
     await hallucinater.on_message(message)
+    await message_stats_tracker.on_message(message)
 
 
 @client.event
