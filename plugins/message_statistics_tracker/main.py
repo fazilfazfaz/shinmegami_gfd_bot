@@ -189,7 +189,7 @@ class MessageStatisticsTracker(BasePlugin):
             start_of_year = datetime.now(timezone.utc).replace(month=1, day=1).date()
             return MessageStatisticsDateFilter(DailyMessageCount.date >= start_of_year, "this year")
         if message_range_type == "date":
-            date_filter_str = message.content.lower()[message_range.span()[1]:].strip()
+            date_filter_str = re.sub(r"<@!?(\d+)>", "", message.content.lower()[message_range.span()[1]:]).strip()
             if not date_filter_str:
                 raise MessageStatisticsTracker.DateFilterError(
                     'A date filter is required after the .messages-date command')
