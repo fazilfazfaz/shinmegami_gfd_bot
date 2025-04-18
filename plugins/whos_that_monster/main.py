@@ -67,9 +67,10 @@ class WhosThatMonster(BasePlugin):
 
     async def on_message(self, message: discord.Message):
         msg = message.content.lower()
-        if message.channel.type == discord.ChannelType.private and msg == '.release-monster':
+        if message.channel.type == discord.ChannelType.private and msg.startswith('.release-monster'):
             if message.author.id in self.on_demand_release_users and not self.current_monster_message:
-                await self.post_monster()
+                requested_monster = msg.split(' ')[1] if ' ' in msg else None
+                await self.post_monster(requested_monster)
                 self.main_loop.cancel()
                 self.start_main_loop()
             return
@@ -137,10 +138,13 @@ class WhosThatMonster(BasePlugin):
         im = Image.open(os.path.join(self.get_monster_files_path(), monster_file))
         return discord.File(self.get_image_bytes(im), self.filename)
 
-    def get_hidden_monster(self) -> discord.File:
+    def get_hidden_monster(self, requested_monster=None) -> discord.File:
         monsters_dir = self.get_monster_files_path()
-        monster_files = os.listdir(monsters_dir)
-        monster = random.choice(list(filter(lambda x: x.endswith('.png'), monster_files)))
+        if requested_monster is not None:
+            monster = requested_monster + '.png'
+        else:
+            monster_files = os.listdir(monsters_dir)
+            monster = random.choice(list(filter(lambda x: x.endswith('.png'), monster_files)))
         self.current_monster = monster[0:-4]
         self.current_monster_file = monster
         logger.info(f'Monster released {self.current_monster}')
@@ -152,8 +156,8 @@ class WhosThatMonster(BasePlugin):
         im2 = Image.fromarray(data)
         return discord.File(self.get_image_bytes(im2), self.filename)
 
-    async def post_monster(self):
-        file = self.get_hidden_monster()
+    async def post_monster(self, requested_monster=None):
+        file = self.get_hidden_monster(requested_monster)
         message_parts = [
             'Who\'s that monster??',
         ]
