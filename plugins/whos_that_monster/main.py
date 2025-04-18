@@ -140,7 +140,7 @@ class WhosThatMonster(BasePlugin):
 
     def get_hidden_monster(self, requested_monster=None) -> discord.File:
         monsters_dir = self.get_monster_files_path()
-        if requested_monster is not None:
+        if requested_monster is not None and os.path.exists(os.path.join(monsters_dir, requested_monster + '.png')):
             monster = requested_monster + '.png'
         else:
             monster_files = os.listdir(monsters_dir)
