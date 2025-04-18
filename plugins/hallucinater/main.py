@@ -7,6 +7,7 @@ import re
 import discord
 from google import genai
 from google.genai import types as gtypes
+from google.genai.errors import APIError
 
 import database.helper
 from database.models import GeneratedImageLog
@@ -144,8 +145,11 @@ class Hallucinater(BasePlugin):
             GeneratedImageLog.increment_count()
             database.helper.gfd_database_helper.release_db()
             self.rate_limiter[message.author.id].increment()
-        except Exception as e:
+        except APIError as e:
             logger.error(str(e))
+            if e.code == 400:
+                await message.reply('Naughty words in this one! Try rephrasing.')
+                return
             await message.reply(self.ask_later)
 
     def is_ai_available(self):
