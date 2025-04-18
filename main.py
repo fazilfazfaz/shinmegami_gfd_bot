@@ -62,6 +62,8 @@ gifty_santa = GiftySanta(client, config)
 activity_tracker = ActivityTracker(client, config)
 hallucinater = Hallucinater(client, config)
 message_stats_tracker = MessageStatisticsTracker(client, config)
+ignored_channels = set(map(int, config.get('ON_MESSAGE_IGNORED_CHANNELS', '').split(
+    ','))) if 'ON_MESSAGE_IGNORED_CHANNELS' in config else set()
 
 
 @client.event
@@ -84,6 +86,8 @@ async def on_ready():
 @client.event
 async def on_message(message: discord.Message):
     if message.author.id == client.user.id:
+        return
+    if message.channel.id in ignored_channels:
         return
     if message.channel.type == discord.ChannelType.private \
             and client.guilds[0].get_member(message.author.id) is not None:
