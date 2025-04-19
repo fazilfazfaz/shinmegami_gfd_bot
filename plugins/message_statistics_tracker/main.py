@@ -20,8 +20,9 @@ class MessageStatisticsDateFilter:
 
 class MessageStatisticsTracker(BasePlugin):
     stats_collected: dict
-    invalid_date_filter_command_reply = 'Command must be .messages-today, .messages-yesterday, .messages-week, .messages-month or .messages-year'
-    command_range_pattern = re.compile(r'^\.messages-(today|yesterday|week|month|year|date)')
+    invalid_date_filter_command_reply = ('Command must be .messages-today, .messages-yesterday, .messages-week, '
+                                         '.messages-month, .messages-year or .messages-date <date> or .messages-range <date> <date>')
+    command_range_pattern = re.compile(r'^\.messages-(today|yesterday|week|month|year|date|range)')
 
     class DateFilterError(Exception):
         def __init__(self, message=None):
@@ -168,7 +169,8 @@ class MessageStatisticsTracker(BasePlugin):
 
     @staticmethod
     def get_message_range_filter(message: discord.Message):
-        message_range = MessageStatisticsTracker.command_range_pattern.match(message.content.lower())
+        msg_lower = re.sub(r"<@!?(\d+)>", "", message.content.lower())
+        message_range = MessageStatisticsTracker.command_range_pattern.match(msg_lower)
         if message_range is None:
             raise MessageStatisticsTracker.DateFilterError()
         message_range_type = message_range.group(1)
@@ -186,10 +188,23 @@ class MessageStatisticsTracker(BasePlugin):
             start_of_month = datetime.now(timezone.utc).replace(day=1).date()
             return MessageStatisticsDateFilter(DailyMessageCount.date >= start_of_month, "this month")
         if message_range_type == "year":
+            year_requested = re.search(r" ([1-9]\d\d\d)$", msg_lower)
+            if year_requested:
+                try:
+                    year = int(year_requested.group(1))
+                    start_of_year = datetime(year, 1, 1, tzinfo=timezone.utc)
+                    end_of_year = datetime(year, 12, 31, tzinfo=timezone.utc)
+                    return MessageStatisticsDateFilter(
+                        (DailyMessageCount.date >= start_of_year.date()) &
+                        (DailyMessageCount.date <= end_of_year.date()),
+                        f"the year {year}"
+                    )
+                except ValueError:
+                    raise MessageStatisticsTracker.UnparseableDateFilterError(year_requested)
             start_of_year = datetime.now(timezone.utc).replace(month=1, day=1).date()
             return MessageStatisticsDateFilter(DailyMessageCount.date >= start_of_year, "this year")
         if message_range_type == "date":
-            date_filter_str = re.sub(r"<@!?(\d+)>", "", message.content.lower()[message_range.span()[1]:]).strip()
+            date_filter_str = msg_lower[message_range.span()[1]:].strip()
             if not date_filter_str:
                 raise MessageStatisticsTracker.DateFilterError(
                     'A date filter is required after the .messages-date command')
@@ -198,6 +213,26 @@ class MessageStatisticsTracker(BasePlugin):
             if dt is None:
                 raise MessageStatisticsTracker.UnparseableDateFilterError(date_filter_str)
             return MessageStatisticsDateFilter(DailyMessageCount.date == dt.date(), dt.strftime('%Y-%m-%d'))
+        if message_range_type == "range":
+            date_filter_str = msg_lower[message_range.span()[1]:].strip()
+            date_parts = date_filter_str.split(sep=' ')
+            if len(date_parts) != 2:
+                raise MessageStatisticsTracker.DateFilterError(
+                    'Two dates (from and to) in the format YYYY-MM-DD are required after the .messages-range command'
+                )
+            try:
+                from_date = datetime.strptime(date_parts[0], '%Y-%m-%d').date()
+                to_date = datetime.strptime(date_parts[1], '%Y-%m-%d').date()
+            except ValueError:
+                raise MessageStatisticsTracker.DateFilterError(
+                    'Invalid date format. Please provide dates in the format YYYY-MM-DD.'
+                )
+            if from_date > to_date:
+                raise MessageStatisticsTracker.DateFilterError('The from_date cannot be after the to_date.')
+            return MessageStatisticsDateFilter(
+                (DailyMessageCount.date >= from_date) & (DailyMessageCount.date <= to_date),
+                f"range -> from {from_date} to {to_date}"
+            )
         raise MessageStatisticsTracker.DateFilterError()
 
     @staticmethod
