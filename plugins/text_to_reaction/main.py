@@ -78,19 +78,11 @@ class TextToReaction(BasePlugin):
     def __init__(self, client: discord.Client, config: dict):
         super().__init__(client, config)
 
-    async def on_message(self, message: discord.Message):
+    @staticmethod
+    async def on_message(message: discord.Message):
         msg_lower = message.content.lower()
         if not msg_lower.startswith('.react-text '):
             return
-        for key in TextToReaction.emoji_replacements:
-            for emoji in TextToReaction.emoji_replacements[key]:
-                try:
-                    await message.add_reaction(emoji)
-                    await message.remove_reaction(emoji, self.client.user)
-                except discord.errors.HTTPException:
-                    print(key, emoji)
-                    pass
-        return
         if message.reference is None or not isinstance(message.reference, discord.MessageReference):
             await message.add_reaction('🚫')
             return
