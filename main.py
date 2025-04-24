@@ -15,6 +15,7 @@ from plugins.message_statistics_tracker.main import MessageStatisticsTracker
 from plugins.reaction_tracker.main import ReactionTracker
 from plugins.repost_watcher.main import RepostWatcher
 from plugins.smoothie_maker.main import SmoothieMaker
+from plugins.text_to_reaction.main import TextToReaction
 from plugins.time_assistant.main import TimeAssistant
 from plugins.twitch_announcer.main import TwitchAnnouncer
 from plugins.user_message_responder.main import UserMessageResponder
@@ -62,6 +63,7 @@ gifty_santa = GiftySanta(client, config)
 activity_tracker = ActivityTracker(client, config)
 hallucinater = Hallucinater(client, config)
 message_stats_tracker = MessageStatisticsTracker(client, config)
+text_to_reaction = TextToReaction(client, config)
 ignored_channels = set(map(int, config.get('ON_MESSAGE_IGNORED_CHANNELS', '').split(
     ','))) if 'ON_MESSAGE_IGNORED_CHANNELS' in config else set()
 
@@ -110,6 +112,7 @@ async def on_message(message: discord.Message):
     await activity_tracker.on_message(message)
     await hallucinater.on_message(message)
     await message_stats_tracker.on_message(message)
+    await text_to_reaction.on_message(message)
 
 
 @client.event
