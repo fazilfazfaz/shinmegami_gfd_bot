@@ -36,7 +36,7 @@ class TextToReaction(BasePlugin):
         "E": ["🇪"],
         "F": ["🇫"],
         "G": ["🇬"],
-        "H": ["🇭", "#"],
+        "H": ["🇭", "#️⃣"],
         "I": ["🇮", "ℹ️"],
         "J": ["🇯"],
         "K": ["🇰"],
@@ -57,16 +57,16 @@ class TextToReaction(BasePlugin):
         "Z": ["🇿"],
         "10": ["🔟"],
         "100": ["💯"],
-        "1": ["1", "🥇"],
-        "2": ["2", "🥈"],
-        "3": ["3", "🥉"],
-        "4": ["4"],
-        "5": ["5"],
-        "6": ["6"],
-        "7": ["7"],
-        "8": ["8", "🎱"],
-        "9": ["9"],
-        "0": ["0"],
+        "1": ["1️⃣", "🥇"],
+        "2": ["2️⃣", "🥈"],
+        "3": ["3️⃣", "🥉"],
+        "4": ["4️⃣"],
+        "5": ["5️⃣"],
+        "6": ["6️⃣"],
+        "7": ["7️⃣"],
+        "8": ["8️⃣", "🎱"],
+        "9": ["9️⃣"],
+        "0": ["0️⃣"],
         "!!": ["‼️"],
         "!?": ["⁉️"],
         "!": ["❗", "❕"],
@@ -78,11 +78,19 @@ class TextToReaction(BasePlugin):
     def __init__(self, client: discord.Client, config: dict):
         super().__init__(client, config)
 
-    @staticmethod
-    async def on_message(message: discord.Message):
+    async def on_message(self, message: discord.Message):
         msg_lower = message.content.lower()
         if not msg_lower.startswith('.react-text '):
             return
+        for key in TextToReaction.emoji_replacements:
+            for emoji in TextToReaction.emoji_replacements[key]:
+                try:
+                    await message.add_reaction(emoji)
+                    await message.remove_reaction(emoji, self.client.user)
+                except discord.errors.HTTPException:
+                    print(key, emoji)
+                    pass
+        return
         if message.reference is None or not isinstance(message.reference, discord.MessageReference):
             await message.add_reaction('🚫')
             return
