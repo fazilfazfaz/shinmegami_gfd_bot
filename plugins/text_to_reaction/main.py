@@ -95,6 +95,10 @@ class TextToReaction(BasePlugin):
         if emojis_to_react is None:
             await message.add_reaction('🚫')
             return
+        existing_reactions = [reaction.emoji for reaction in replied_to_message.reactions]
+        if any(emoji in existing_reactions for emoji in emojis_to_react):
+            await message.add_reaction('🚫')
+            return
         for emoji in emojis_to_react:
             await replied_to_message.add_reaction(emoji)
 
