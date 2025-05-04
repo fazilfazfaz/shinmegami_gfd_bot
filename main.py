@@ -97,7 +97,7 @@ async def on_message(message: discord.Message):
         await anon_messenger.on_message(message)
         await gifty_santa.on_message(message)
         await whos_that_monster.on_message(message)
-        await message_stats_tracker.on_message(message)
+        await message_stats_tracker.on_message_private(message)
         return
     await gifty_santa.on_message(message)
     await smoothie_maker.on_message(message)
