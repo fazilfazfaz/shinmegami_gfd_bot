@@ -76,6 +76,9 @@ class MessageStatisticsTracker(BasePlugin):
 
     @staticmethod
     async def post_range_statistics(message: discord.Message):
+        if message.content.lower().endswith(' channels'):
+            await MessageStatisticsTracker.post_range_statistics_for_channels(message)
+            return
         if message.mentions:
             await MessageStatisticsTracker.post_range_statistics_for_users(message)
             return
@@ -137,6 +140,39 @@ class MessageStatisticsTracker(BasePlugin):
                 if current_user is not None:
                     stats_message += "\n"
                 stats_message += f"Stats for <@{current_user}>:\n"
+            channel_mention = f"<#{record.thread_id or record.channel_id}>"
+            stats_message += f"{channel_mention}: {record.total_messages:,} messages\n"
+
+        await message.reply(stats_message, allowed_mentions=discord.AllowedMentions(users=False))
+
+    @staticmethod
+    async def post_range_statistics_for_channels(message: discord.Message):
+        try:
+            date_filter = MessageStatisticsTracker.get_message_range_filter(message)
+        except MessageStatisticsTracker.DateFilterError as e:
+            await message.reply(str(e))
+            return
+        stats_message = f"**Stats for {date_filter.title}:**\n"
+        data = (
+            DailyMessageCount
+            .select(
+                DailyMessageCount.channel_id,
+                DailyMessageCount.thread_id,
+                fn.SUM(DailyMessageCount.message_count).alias('total_messages')
+            )
+            .where(
+                date_filter.date_filter
+            )
+            .group_by(DailyMessageCount.channel_id, DailyMessageCount.thread_id)
+            .order_by(fn.SUM(DailyMessageCount.message_count).desc())
+        )
+
+        if not data.exists():
+            await message.reply("No data to show :(",
+                                allowed_mentions=discord.AllowedMentions(users=False))
+            return
+
+        for record in data:
             channel_mention = f"<#{record.thread_id or record.channel_id}>"
             stats_message += f"{channel_mention}: {record.total_messages:,} messages\n"
 
