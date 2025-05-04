@@ -52,14 +52,18 @@ class MessageStatisticsTracker(BasePlugin):
             except Exception as e:
                 logger.error(str(e))
 
+    async def on_message_private(self, message: discord.Message):
+        if message.content.lower() == '.messages-stats':
+            await self.post_overall_stats(message)
+            return
+        if message.content.lower().startswith('.messages-'):
+            await self.post_range_statistics(message)
+            return
+
     async def on_message(self, message: discord.Message):
-        if message.channel.type == discord.ChannelType.private:
-            if message.content.lower() == '.messages-stats':
-                await self.post_overall_stats(message)
-                return
-            if message.content.lower().startswith('.messages-'):
-                await self.post_range_statistics(message)
-                return
+        if message.content.lower() == '.messages-stats':
+            return
+        if message.content.lower().startswith('.messages-'):
             return
         self.track_message(message)
 
@@ -76,10 +80,9 @@ class MessageStatisticsTracker(BasePlugin):
             self.stats_collected[channel_key][msg_date][message.author.id] = 0
         self.stats_collected[channel_key][msg_date][message.author.id] += 1
 
-    @staticmethod
-    async def post_range_statistics(message: discord.Message):
+    async def post_range_statistics(self, message: discord.Message):
         if message.content.lower().endswith(' channels'):
-            await MessageStatisticsTracker.post_range_statistics_for_channels(message)
+            await self.post_range_statistics_for_channels(message)
             return
         if message.mentions:
             await MessageStatisticsTracker.post_range_statistics_for_users(message)
@@ -92,7 +95,10 @@ class MessageStatisticsTracker(BasePlugin):
         data = (
             DailyMessageCount
             .select(DailyMessageCount.user_id, fn.SUM(DailyMessageCount.message_count).alias('total_messages'))
-            .where(date_filter.date_filter)
+            .where(
+                date_filter.date_filter
+                & (DailyMessageCount.user_id != self.client.user.id)
+            )
             .group_by(DailyMessageCount.user_id)
             .order_by(fn.SUM(DailyMessageCount.message_count).desc())
         )
@@ -147,8 +153,7 @@ class MessageStatisticsTracker(BasePlugin):
 
         await message.reply(stats_message, allowed_mentions=discord.AllowedMentions(users=False))
 
-    @staticmethod
-    async def post_range_statistics_for_channels(message: discord.Message):
+    async def post_range_statistics_for_channels(self, message: discord.Message):
         try:
             date_filter = MessageStatisticsTracker.get_message_range_filter(message)
         except MessageStatisticsTracker.DateFilterError as e:
@@ -164,6 +169,7 @@ class MessageStatisticsTracker(BasePlugin):
             )
             .where(
                 date_filter.date_filter
+                & (DailyMessageCount.user_id != self.client.user.id)
             )
             .group_by(DailyMessageCount.channel_id, DailyMessageCount.thread_id)
             .order_by(fn.SUM(DailyMessageCount.message_count).desc())
