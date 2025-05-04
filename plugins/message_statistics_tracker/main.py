@@ -205,7 +205,7 @@ class MessageStatisticsTracker(BasePlugin):
 
     @staticmethod
     def get_message_range_filter(message: discord.Message):
-        msg_lower = re.sub(r"<@!?(\d+)>", "", message.content.lower())
+        msg_lower = re.sub(r"<@!?(\d+)>|channels$", "", message.content.lower()).strip()
         message_range = MessageStatisticsTracker.command_range_pattern.match(msg_lower)
         if message_range is None:
             raise MessageStatisticsTracker.DateFilterError()
