@@ -113,6 +113,7 @@ async def on_message(message: discord.Message):
     await activity_tracker.on_message(message)
     await hallucinater.on_message(message)
     await text_to_reaction.on_message(message)
+    await message_stats_tracker.on_message(message)
 
 
 @client.event

@@ -53,11 +53,13 @@ class MessageStatisticsTracker(BasePlugin):
                 logger.error(str(e))
 
     async def on_message(self, message: discord.Message):
-        if message.content.lower() == '.messages-stats':
-            await self.post_overall_stats(message)
-            return
-        if message.content.lower().startswith('.messages-'):
-            await self.post_range_statistics(message)
+        if message.channel.type == discord.ChannelType.private:
+            if message.content.lower() == '.messages-stats':
+                await self.post_overall_stats(message)
+                return
+            if message.content.lower().startswith('.messages-'):
+                await self.post_range_statistics(message)
+                return
             return
         self.track_message(message)
 
