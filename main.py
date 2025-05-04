@@ -81,7 +81,6 @@ async def on_ready():
     banner_randomizer.on_ready()
     icon_flipper.on_ready()
     reaction_tracker.on_ready()
-    whos_that_monster.on_ready()
     message_stats_tracker.on_ready()
 
 
@@ -109,7 +108,6 @@ async def on_message(message: discord.Message):
     await user_message_responder.on_message(message)
     await banner_randomizer.on_message(message)
     await reaction_tracker.on_message(message)
-    await whos_that_monster.on_message(message)
     await activity_tracker.on_message(message)
     await hallucinater.on_message(message)
     await text_to_reaction.on_message(message)
