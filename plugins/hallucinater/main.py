@@ -97,13 +97,31 @@ class Hallucinater(BasePlugin):
         try:
             async with message.channel.typing():
                 response = await self.gen_ai_client.aio.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="models/gemini-2.0-flash-preview-image-generation",
                     contents=contents,
                     config=gtypes.GenerateContentConfig(
-                        system_instruction=self.config.get('AI_SYSTEM_INSTRUCTION', ''),
+                        response_modalities=['TEXT', 'IMAGE'],
                     )
                 )
-            await message.reply(escape_discord_identifiers(response.text), allowed_mentions=mention_no_one)
+                texts = []
+                files = []
+                for part in response.candidates[0].content.parts:
+                    if part.text is not None:
+                        texts.append(part.text)
+                    elif part.inline_data is not None:
+                        img_bytes = io.BytesIO()
+                        img_bytes.write(part.inline_data.data)
+                        img_bytes.seek(0)
+                        files.append(discord.File(img_bytes, 'generated_image.png'))
+            await message.reply(
+                escape_discord_identifiers("\n".join(texts)),
+                files=files,
+                allowed_mentions=mention_no_one
+            )
+            if files:
+                database.helper.gfd_database_helper.replenish_db()
+                GeneratedImageLog.increment_count(len(files))
+                database.helper.gfd_database_helper.release_db()
             self.rate_limiter[message.author.id].increment()
         except Exception as e:
             logger.error(str(e))

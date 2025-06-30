@@ -13,6 +13,8 @@ class RepostWatcher(BasePlugin):
     link_count_msg_pattern = re.compile(r'\.linkcount <?(' + link_regex + ')', re.DOTALL)
 
     async def on_message(self, message):
+        if message.author.bot:
+            return
         if message.content == '.toplinks':
             await self.post_top_links(message)
             return
