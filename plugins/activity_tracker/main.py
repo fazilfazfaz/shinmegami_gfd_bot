@@ -1,3 +1,4 @@
+import copy
 import datetime
 from datetime import timedelta
 
@@ -8,6 +9,8 @@ from database.helper import gfd_database_helper
 from database.models import Activity, ActivityGame, ActivityGamePlatform
 from logger import logger
 from plugins.base import BasePlugin
+
+NVIDIA_GEFORCE_ID_APP_ID = 481331590383796224
 
 
 class ActivityTracker(BasePlugin):
@@ -27,12 +30,8 @@ class ActivityTracker(BasePlugin):
             await self.post_per_user_stats_for_game(message)
 
     async def presence_update(self, before: discord.Member, after: discord.Member):
-        prior_game_activities: list[discord.Activity] = list(
-            filter(lambda x: x.type == discord.ActivityType.playing, before.activities)
-        )
-        new_game_activities: list[discord.Game] = list(
-            filter(lambda x: x.type == discord.ActivityType.playing, after.activities)
-        )
+        prior_game_activities = self.get_activities_filtered(before.activities)
+        new_game_activities = self.get_activities_filtered(after.activities)
         if not prior_game_activities and not new_game_activities:
             return
         if prior_game_activities and not new_game_activities:
@@ -197,3 +196,23 @@ class ActivityTracker(BasePlugin):
             text += f'<@{user_id}>: {int(hours)}h {int(minutes)}m\n'
 
         await message.reply(text, allowed_mentions=discord.AllowedMentions(users=False))
+
+    @staticmethod
+    def get_activities_filtered(activities):
+        playing_activities: list[discord.Activity] = [
+            a for a in activities
+            if a.type == discord.ActivityType.playing
+               and (a.application_id == NVIDIA_GEFORCE_ID_APP_ID or a.name != "NVIDIA GeForce NOW")
+        ]
+        geforce_event = None
+        for activity in playing_activities:
+            if activity.application_id == NVIDIA_GEFORCE_ID_APP_ID:
+                if activity.details and activity.details.startswith("Playing "):
+                    geforce_event = activity
+                continue
+            return [activity]
+        if geforce_event:
+            cloned_geforce_event = copy.copy(geforce_event)
+            cloned_geforce_event.name = geforce_event.details[8:]
+            return [cloned_geforce_event]
+        return []
