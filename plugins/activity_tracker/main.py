@@ -58,11 +58,16 @@ class ActivityTracker(BasePlugin):
         activity_game_platform = None
         if new_game_activity.platform is not None:
             activity_game_platform, created = ActivityGamePlatform.get_or_create(name=new_game_activity.platform)
+        start_time = (
+            new_game_activity.start.timestamp()
+            if new_game_activity.start
+            else datetime.datetime.now().timestamp()
+        )
         activity = Activity.create(
             user_id=member.id,
             activity_game_id=activity_game.id,
             activity_game_platform_id=None if activity_game_platform is None else activity_game_platform.id,
-            start_time=new_game_activity.start.timestamp(),
+            start_time=start_time,
         )
         gfd_database_helper.release_db()
         return activity
