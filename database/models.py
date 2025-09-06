@@ -245,13 +245,13 @@ class GeneratedImageLog(BaseModel):
     count = IntegerField(default=0)
 
     @staticmethod
-    def increment_count():
+    def increment_count(count=1):
         current_date = datetime.date.today()
         month = current_date.month
         year = current_date.year
 
         log, created = GeneratedImageLog.get_or_create(month=month, year=year, defaults={"count": 0})
-        log.count += 1
+        log.count += count
         log.save()
 
     @staticmethod

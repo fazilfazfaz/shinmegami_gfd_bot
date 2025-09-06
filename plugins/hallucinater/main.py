@@ -94,16 +94,43 @@ class Hallucinater(BasePlugin):
             contents.append(user_prompt)
         else:
             contents.append(user_prompt)
+        response_modalities = ['TEXT']
+        database.helper.gfd_database_helper.replenish_db()
+        total_generated_images = GeneratedImageLog.get_count()
+        database.helper.gfd_database_helper.release_db()
+        if total_generated_images < self.img_gen_count_max_per_month:
+            response_modalities.append('IMAGE')
         try:
             async with message.channel.typing():
                 response = await self.gen_ai_client.aio.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="models/gemini-2.0-flash-preview-image-generation",
                     contents=contents,
                     config=gtypes.GenerateContentConfig(
-                        system_instruction=self.config.get('AI_SYSTEM_INSTRUCTION', ''),
+                        response_modalities=response_modalities,
                     )
                 )
-            await message.reply(escape_discord_identifiers(response.text), allowed_mentions=mention_no_one)
+                texts = []
+                files = []
+                for part in response.candidates[0].content.parts:
+                    if part.text is not None:
+                        texts.append(part.text)
+                    elif part.inline_data is not None:
+                        img_bytes = io.BytesIO()
+                        img_bytes.write(part.inline_data.data)
+                        img_bytes.seek(0)
+                        files.append(discord.File(img_bytes, 'generated_image.png'))
+            if files:
+                database.helper.gfd_database_helper.replenish_db()
+                GeneratedImageLog.increment_count(len(files))
+                database.helper.gfd_database_helper.release_db()
+                texts.append(
+                    f'Monthly image gen usage: {total_generated_images + len(files)}/{self.img_gen_count_max_per_month}'
+                )
+            await message.reply(
+                escape_discord_identifiers("\n".join(texts)),
+                files=files,
+                allowed_mentions=mention_no_one
+            )
             self.rate_limiter[message.author.id].increment()
         except Exception as e:
             logger.error(str(e))
