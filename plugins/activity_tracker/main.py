@@ -204,20 +204,25 @@ class ActivityTracker(BasePlugin):
 
     @staticmethod
     def get_activities_filtered(activities):
-        playing_activities: list[discord.Activity] = [
-            a for a in activities
-            if a.type == discord.ActivityType.playing
-               and (a.application_id == NVIDIA_GEFORCE_ID_APP_ID or a.name != "NVIDIA GeForce NOW")
-        ]
         geforce_event = None
-        for activity in playing_activities:
-            if activity.application_id == NVIDIA_GEFORCE_ID_APP_ID:
-                if activity.details and activity.details.startswith("Playing "):
-                    geforce_event = activity
+
+        for a in activities:
+            if a.type != discord.ActivityType.playing:
                 continue
-            return [activity]
+
+            app_id = getattr(a, "application_id", None)
+            if app_id == NVIDIA_GEFORCE_ID_APP_ID:
+                details = getattr(a, "details", None)
+                if details and details.startswith("Playing "):
+                    geforce_event = a
+                continue
+
+            if a.name != "NVIDIA GeForce NOW":
+                return [a]
+
         if geforce_event:
-            cloned_geforce_event = copy.copy(geforce_event)
-            cloned_geforce_event.name = geforce_event.details[8:]
-            return [cloned_geforce_event]
+            cloned = copy.copy(geforce_event)
+            cloned.name = geforce_event.details[8:]
+            return [cloned]
+
         return []
