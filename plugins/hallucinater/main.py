@@ -103,7 +103,7 @@ class Hallucinater(BasePlugin):
         try:
             async with message.channel.typing():
                 response = await self.gen_ai_client.aio.models.generate_content(
-                    model="models/gemini-2.0-flash-preview-image-generation",
+                    model="models/gemini-2.5-flash-image",
                     contents=contents,
                     config=gtypes.GenerateContentConfig(
                         response_modalities=response_modalities,
