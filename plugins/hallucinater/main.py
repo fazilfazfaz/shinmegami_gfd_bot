@@ -150,7 +150,7 @@ class Hallucinater(BasePlugin):
         try:
             async with message.channel.typing():
                 response = await self.gen_ai_client.aio.models.generate_images(
-                    model='imagen-3.0-generate-002',
+                    model='imagen-4.0-generate-001',
                     prompt=user_prompt,
                     config=gtypes.GenerateImagesConfig(
                         number_of_images=1,
