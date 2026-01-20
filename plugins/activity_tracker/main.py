@@ -29,7 +29,7 @@ class ActivityTracker(BasePlugin):
         if message.content.startswith('.game '):
             await self.post_per_user_stats_for_game(message)
             return
-        if message.content.startswith('.game-replay'):
+        if message.content.startswith('.games-replay'):
             await self.post_game_replay(message)
             return
 
