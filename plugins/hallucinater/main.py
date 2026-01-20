@@ -91,9 +91,13 @@ class Hallucinater(BasePlugin):
                     continue
                 img_bytes = await attachment.read()
                 contents.append(gtypes.Part.from_bytes(data=img_bytes, mime_type=attachment.content_type))
-            contents.append(user_prompt)
-        else:
-            contents.append(user_prompt)
+        elif message.attachments:
+            for attachment in message.attachments:
+                if not attachment.content_type.startswith('image/'):
+                    continue
+                img_bytes = await attachment.read()
+                contents.append(gtypes.Part.from_bytes(data=img_bytes, mime_type=attachment.content_type))
+        contents.append(user_prompt)
         response_modalities = ['TEXT']
         database.helper.gfd_database_helper.replenish_db()
         total_generated_images = GeneratedImageLog.get_count()

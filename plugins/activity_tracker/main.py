@@ -3,7 +3,7 @@ import datetime
 from datetime import timedelta
 
 import discord
-from peewee import fn
+from peewee import fn, JOIN
 
 from database.helper import gfd_database_helper
 from database.models import Activity, ActivityGame, ActivityGamePlatform
@@ -28,6 +28,10 @@ class ActivityTracker(BasePlugin):
             return
         if message.content.startswith('.game '):
             await self.post_per_user_stats_for_game(message)
+            return
+        if message.content.startswith('.game-replay'):
+            await self.post_game_replay(message)
+            return
 
     async def presence_update(self, before: discord.Member, after: discord.Member):
         prior_game_activities = self.get_activities_filtered(before.activities)
@@ -103,12 +107,15 @@ class ActivityTracker(BasePlugin):
         gfd_database_helper.replenish_db()
         results = query.dicts()
         gfd_database_helper.release_db()
-        if len(results) == 0:
+        header = 'Y\'all played a lot of games this week!\n\n'
+        pages = ActivityTracker.create_games_stats_text(results)
+        if not pages:
             await message.reply('No stats for this week yet')
             return
-        stats_text = 'Y\'all played a lot of games this week!\n\n'
-        stats_text += ActivityTracker.create_games_stats_text(results)
-        await message.reply(stats_text)
+        num_pages = len(pages)
+        await message.reply(f"{header}Page 1/{num_pages}\n\n{pages[0]}")
+        for i, page in enumerate(pages[1:], start=2):
+            await message.channel.send(f"Page {i}/{num_pages}\n\n{page}")
 
     @staticmethod
     async def post_daily_stats(message: discord.Message):
@@ -117,12 +124,15 @@ class ActivityTracker(BasePlugin):
         gfd_database_helper.replenish_db()
         results = query.dicts()
         gfd_database_helper.release_db()
-        if len(results) == 0:
+        header = 'Y\'all played a lot of games today!\n\n'
+        pages = ActivityTracker.create_games_stats_text(results)
+        if not pages:
             await message.reply('No stats for this day yet')
             return
-        stats_text = 'Y\'all played a lot of games today!\n\n'
-        stats_text += ActivityTracker.create_games_stats_text(results)
-        await message.reply(stats_text)
+        num_pages = len(pages)
+        await message.reply(f"{header}Page 1/{num_pages}\n\n{pages[0]}")
+        for i, page in enumerate(pages[1:], start=2):
+            await message.channel.send(f"Page {i}/{num_pages}\n\n{page}")
 
     @staticmethod
     def get_activities_selection_query(last_week):
@@ -146,13 +156,45 @@ class ActivityTracker(BasePlugin):
 
     @staticmethod
     def create_games_stats_text(results):
-        stats_text = ''
+        pages = []
+        current_page = ""
+        current_platform = None
+        character_limit = 1800  # Leave room for headers from calling methods
+
         for result in results:
+            lines_for_entry = []
+            platform_changed = False
+
+            if 'platform_name' in result:
+                platform = result.get("platform_name") or "desktop"
+                if platform and platform != current_platform:
+                    platform_changed = True
+                    if current_platform:
+                        lines_for_entry.append(f'\n\n')
+                    lines_for_entry.append(f'**Platform: {platform}**\n')
+                    current_platform = platform
+
             duration = result["total_time"]
             hours, remainder = divmod(duration, 3600)
             minutes = remainder // 60
-            stats_text += f'**{result["name"]}**: {int(hours)}h {int(minutes)}m\n'
-        return stats_text
+            lines_for_entry.append(f'**{result["name"]}**: {int(hours)}h {int(minutes)}m\n')
+
+            entry_text = "".join(lines_for_entry)
+
+            if len(current_page) + len(entry_text) > character_limit and current_page:
+                pages.append(current_page)
+                # start a new page
+                if not platform_changed and current_platform:
+                    current_page = f'**Platform: {current_platform} (continued)**\n' + lines_for_entry[-1]
+                else:
+                    current_page = entry_text
+            else:
+                current_page += entry_text
+
+        if current_page:
+            pages.append(current_page)
+
+        return pages
 
     @staticmethod
     async def post_per_user_stats_for_game(message):
@@ -201,6 +243,62 @@ class ActivityTracker(BasePlugin):
             text += f'<@{user_id}>: {int(hours)}h {int(minutes)}m\n'
 
         await message.reply(text, allowed_mentions=discord.AllowedMentions(users=False))
+
+    @staticmethod
+    async def post_game_replay(message: discord.Message):
+        target_user = message.author
+        if message.mentions:
+            target_user = message.mentions[0]
+        current_date = datetime.datetime.now()
+        year_to_check = current_date.year - 1
+
+        start_of_year = datetime.datetime(year_to_check, 1, 1)
+        end_of_year = datetime.datetime(year_to_check, 12, 31, 23, 59, 59)
+
+        query = (
+            Activity
+            .select(
+                ActivityGame.name,
+                ActivityGamePlatform.name.alias('platform_name'),
+                fn.SUM(Activity.end_time - Activity.start_time).alias('total_time')
+            )
+            .join(ActivityGame, on=(Activity.activity_game_id == ActivityGame.id))
+            .join(
+                ActivityGamePlatform,
+                join_type=JOIN.LEFT_OUTER,
+                on=(Activity.activity_game_platform_id == ActivityGamePlatform.id)
+            )
+            .where(
+                (Activity.user_id == target_user.id)
+                & (Activity.end_time.is_null(False))
+                & (Activity.start_time >= start_of_year.timestamp())
+                & (Activity.start_time <= end_of_year.timestamp())
+                & ((Activity.end_time - Activity.start_time) >= 60)
+            )
+            .group_by(ActivityGame.name, ActivityGamePlatform.name)
+            .order_by(ActivityGamePlatform.name.asc(nulls='FIRST'),
+                      fn.SUM(Activity.end_time - Activity.start_time).desc())
+        )
+
+        gfd_database_helper.replenish_db()
+        results = query.dicts()
+        gfd_database_helper.release_db()
+
+        header = f'🎮Here is the gaming replay for <@{target_user.id}> for {year_to_check}:\n\n'
+        pages = ActivityTracker.create_games_stats_text(results)
+
+        if not pages:
+            if target_user == message.author:
+                await message.reply(f'You have no games played in {year_to_check}!')
+            else:
+                await message.reply(f'{target_user.display_name} has no games played in {year_to_check}!')
+            return
+
+        num_pages = len(pages)
+        await message.reply(f"{header}Page 1/{num_pages}\n\n{pages[0]}",
+                            allowed_mentions=discord.AllowedMentions(users=False))
+        for i, page in enumerate(pages[1:], start=2):
+            await message.channel.send(f"Page {i}/{num_pages}\n\n{page}")
 
     @staticmethod
     def get_activities_filtered(activities):
