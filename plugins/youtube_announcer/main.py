@@ -60,7 +60,7 @@ class YoutubeAnnouncer(BasePlugin):
             epoch_time = dateobj.timestamp()
             seconds_elapsed = time.time() - epoch_time
             video_id = video['snippet']['resourceId']['videoId']
-            if seconds_elapsed <= 1800 and video_id not in self.videos_encountered:
+            if seconds_elapsed <= 6 * 3600 and video_id not in self.videos_encountered:
                 logger.debug(f'Trying to post video {video["snippet"]["title"]}')
                 self.videos_encountered.append(video_id)
                 await self.post_video_to_channel(video_id, video)
